@@ -1,0 +1,20 @@
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-server:9000
+  cloud:
+    nacos:
+      discovery:
+        register-enabled: false
+        enabled: false
+        watch:
+          enabled: false
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://121.4.78.71:3306/crayon?userUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useCursorFetch=true
+    username: liubenwei
+    password: liubenwei
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/*.xml
