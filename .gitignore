@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 /cache/cache-spring-boot-starter/.mvn/
+/cache/cache-spring-boot-starter/mvnw
