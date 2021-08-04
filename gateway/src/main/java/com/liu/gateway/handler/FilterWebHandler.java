@@ -57,13 +57,10 @@ public class FilterWebHandler implements WebHandler {
     }
     @Override
     public Mono<Void> handle(ServerWebExchange exchange) {
+        //直接发起请求
         ServerHttpResponse exchangeResponse = exchange.getResponse();
         ServerHttpRequest request = exchange.getRequest();
         String url = request.getURI().toString();
-//        final HttpMethod method = HttpMethod.valueOf(request.getMethod().toString());
-        HttpHeaders httpHeaders = request.getHeaders();
-//        io.netty.handler.codec.http.HttpHeaders nettyHeaders = new DefaultHttpHeaders();
-//        Set<String> strings = httpHeaders.keySet();
 
         String transferEncoding = request.getHeaders().getFirst(HttpHeaders.TRANSFER_ENCODING);
         boolean chunkedTransfer = "chunked".equalsIgnoreCase(transferEncoding);
@@ -102,27 +99,6 @@ public class FilterWebHandler implements WebHandler {
                     exchangeResponse.getHeaders().putAll(backendResponse.headers().asHttpHeaders());
                     return exchangeResponse.writeWith(backendResponse.bodyToFlux(DataBuffer.class));
                 });
-
-//        HttpClientResponse clientResponse = exchange.getAttribute("response");
-//
-//        if (clientResponse == null) {
-//            return Mono.empty();
-//        }
-//        ServerHttpResponse response = exchange.getResponse();
-//
-//        NettyDataBufferFactory factory = (NettyDataBufferFactory) response.bufferFactory();
-//        //TODO: what if it's not netty
-//
-//        final Flux<NettyDataBuffer> body = clientResponse.receive()
-//                .retain() //TODO: needed?
-//                .map(factory::wrap);
-//
-//
-//        MediaType contentType = response.getHeaders().getContentType();
-//        return response.writeWith(body);
-
-//        Flux<DataBuffer> res = this.createResponse(exchangeResponse);
-//        return response.writeWith(res);
     }
 
     /**
