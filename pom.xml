@@ -32,7 +32,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.springframework.security.experimental/spring-security-oauth2-authorization-server -->
         <dependency>
             <groupId>org.springframework.security.experimental</groupId>
             <artifactId>spring-security-oauth2-authorization-server</artifactId>
