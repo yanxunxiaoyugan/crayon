@@ -1,0 +1,10 @@
+server:
+  port: 8082
+spring:
+  redis:
+    lettuce:
+      pool:
+        max-active: 2
+    host: 121.4.78.71
+    password: liubenwei
+    port: 6379

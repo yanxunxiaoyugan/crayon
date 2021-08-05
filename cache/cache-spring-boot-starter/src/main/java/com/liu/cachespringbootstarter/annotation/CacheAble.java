@@ -16,7 +16,7 @@ public @interface CacheAble {
      * 过期时间
      * @return
      */
-    int expire();
+    int expire() default 300;
 
     /**
      * 缓存的key
@@ -28,7 +28,7 @@ public @interface CacheAble {
      * 是否缓存的判断条件
      * @return
      */
-    String condition();
+    String condition() default "";
 
     /**
      * 是否启用自动加载

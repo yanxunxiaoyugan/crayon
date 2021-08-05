@@ -10,7 +10,7 @@ public class RoutePredicateHandlerMapping  extends AbstractHandlerMapping {
     @Autowired
     private FilterWebHandler filterWebHandler;
     public RoutePredicateHandlerMapping(){
-       //此处必须设置较高的order，不然请求不会走
+       //此处必须设置较高的order，不然请求不会走到当前的HandlerMapping
         setOrder(1);
     }
 
