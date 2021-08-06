@@ -17,7 +17,7 @@ public class CacheHandler {
         if(Objects.nonNull(dataInCache)){
             return dataInCache;
         }
-        // 执行代理的方法
+        // 执行代理的方法1
         Object returnObj = methodInvocation.proceed();
         redisCacheManager.put(able.key(),returnObj);
         return returnObj;
