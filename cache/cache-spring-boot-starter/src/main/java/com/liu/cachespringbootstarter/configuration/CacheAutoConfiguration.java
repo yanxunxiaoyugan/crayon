@@ -1,10 +1,12 @@
 package com.liu.cachespringbootstarter.configuration;
 
 import com.liu.cachespringbootstarter.annotation.CacheAble;
+import com.liu.cachespringbootstarter.annotation.CacheDel;
 import com.liu.cachespringbootstarter.cache.redis.RedisCacheManager;
 import com.liu.cachespringbootstarter.configuration.pointcut.MyPointcutAdvisor;
 import com.liu.cachespringbootstarter.handler.CacheHandler;
 import com.liu.cachespringbootstarter.interceptor.CacheAbleMethodInterceptor;
+import com.liu.cachespringbootstarter.interceptor.CacheDelMethodInterceptor;
 import org.springframework.aop.support.AbstractPointcutAdvisor;
 import org.springframework.aop.support.DefaultPointcutAdvisor;
 import org.springframework.aop.support.annotation.AnnotationMatchingPointcut;
@@ -30,6 +32,11 @@ public class CacheAutoConfiguration {
     }
 
     @Bean
+    public CacheDelMethodInterceptor cacheDelMethodInterceptor(CacheHandler cacheHandler){
+        return new CacheDelMethodInterceptor(cacheHandler);
+    }
+
+    @Bean
     public CacheHandler cacheHandler(RedisCacheManager redisCacheManager){
         return new CacheHandler(redisCacheManager);
     }
@@ -37,8 +44,15 @@ public class CacheAutoConfiguration {
     @Bean
     public AbstractPointcutAdvisor cacheAbleAdvisor(CacheAbleMethodInterceptor cacheAbleMethodInterceptor){
 
-        AbstractPointcutAdvisor abstractPointcutAdvisor = new MyPointcutAdvisor(CacheAble.class,cacheAbleMethodInterceptor);
-        abstractPointcutAdvisor.setOrder(cacheProperties.getOrder());
-        return abstractPointcutAdvisor;
+        AbstractPointcutAdvisor cacheAbleAdvisor = new MyPointcutAdvisor(CacheAble.class,cacheAbleMethodInterceptor);
+        cacheAbleAdvisor.setOrder(cacheProperties.getOrder());
+        return cacheAbleAdvisor;
+    }
+
+    @Bean
+    public  AbstractPointcutAdvisor cacheDelAdvisor(CacheDelMethodInterceptor cacheDelMethodInterceptor){
+        AbstractPointcutAdvisor cacheDelAdvisor = new MyPointcutAdvisor(CacheDel.class,cacheDelMethodInterceptor);
+        cacheDelAdvisor.setOrder(cacheProperties.getOrder());
+        return cacheDelAdvisor;
     }
 }

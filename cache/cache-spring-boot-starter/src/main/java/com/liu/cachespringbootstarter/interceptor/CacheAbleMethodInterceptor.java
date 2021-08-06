@@ -17,7 +17,7 @@ public class CacheAbleMethodInterceptor implements MethodInterceptor {
     private static  final Logger log = LoggerFactory.getLogger(CacheAbleMethodInterceptor.class);
     CacheHandler cacheHandler;
     public CacheAbleMethodInterceptor(CacheHandler cacheHandler){
-        this.cacheHandler =cacheHandler;
+        this.cacheHandler = cacheHandler;
     }
     @Override
     public Object invoke(MethodInvocation methodInvocation) throws Throwable {

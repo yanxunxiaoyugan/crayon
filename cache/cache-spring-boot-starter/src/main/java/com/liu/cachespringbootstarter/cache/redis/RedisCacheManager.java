@@ -8,6 +8,9 @@ import io.lettuce.core.api.sync.RedisCommands;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.stereotype.Component;
 
+/**
+ * 使用lettuce连接redis
+ */
 @Component
 public class RedisCacheManager {
     private final RedisClient redisClient;
@@ -26,5 +29,9 @@ public class RedisCacheManager {
     }
     public Object get(String key){
         return sync.get(key);
+    }
+
+    public void delString(String key){
+        sync.del(key);
     }
 }
