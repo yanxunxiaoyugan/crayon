@@ -21,6 +21,5 @@ public class CacheHandler {
         Object returnObj = methodInvocation.proceed();
         redisCacheManager.put(able.key(),returnObj);
         return returnObj;
-        return returnObj;
     }
 }
