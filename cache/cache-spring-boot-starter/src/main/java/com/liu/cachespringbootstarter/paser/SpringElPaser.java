@@ -15,6 +15,9 @@ import com.liu.cachespringbootstarter.annotation.CacheAble;
 import com.liu.cachespringbootstarter.constants.SignalConstant;
 import com.liu.cachespringbootstarter.dto.CacheKeyDto;
 
+/**
+ * springEL表达式解析器
+ */
 public class SpringElPaser implements Ipaser {
 	private final ExpressionParser parser = new SpelExpressionParser();
 	// 每次编译Expression都比较慢，所以这里吧expression给缓存起来
@@ -58,6 +61,7 @@ public class SpringElPaser implements Ipaser {
 			}
 		}
 		StandardEvaluationContext context = new StandardEvaluationContext();
+		//把参数设置进去
 		context.setVariable(SignalConstant.args,arguments);
 		for (Map.Entry<String, Method> entry : methodConcurrentHashMap
 				.entrySet()) {
