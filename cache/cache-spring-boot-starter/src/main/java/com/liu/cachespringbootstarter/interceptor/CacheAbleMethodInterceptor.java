@@ -30,6 +30,9 @@ public class CacheAbleMethodInterceptor implements MethodInterceptor {
             Object returnObj = cacheHandler.proceed(cacheAble,methodInvocation);
             return returnObj;
         }
-        return null;
+        //不做处理 ，直接执行被代理的方法
+        return methodInvocation.proceed();
     }
+
+
 }

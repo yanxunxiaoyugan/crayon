@@ -2,8 +2,10 @@ package com.liu.cachespringbootstarter.configuration;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 
 @Configuration
+@Order(1)
 @ConfigurationProperties(prefix = MyCacheProperties.PREFIX)
 public class MyCacheProperties {
     public  static final String PREFIX = "mycache";

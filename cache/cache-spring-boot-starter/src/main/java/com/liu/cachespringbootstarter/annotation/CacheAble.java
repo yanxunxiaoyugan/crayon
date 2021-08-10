@@ -4,6 +4,7 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 缓存的注解
@@ -17,6 +18,8 @@ public @interface CacheAble {
      * @return
      */
     int expire() default 300;
+
+    TimeUnit timeUnit() default TimeUnit.SECONDS;
 
     /**
      * 缓存的key
