@@ -3,14 +3,15 @@ package com.liu.cachespringbootstarter.dto;
 public class CacheKeyDto {
 	private String key;
 	private String hfield;
+	private Object cacheObject;
 
 	public CacheKeyDto() {
 
 	}
 
-	public CacheKeyDto(String key, String hfield) {
+	public CacheKeyDto(String key,Object cacheObject) {
 		this.key = key;
-		this.hfield = hfield;
+		this.cacheObject = cacheObject;
 	}
 
 	public String getKey() {
@@ -27,5 +28,13 @@ public class CacheKeyDto {
 
 	public void setHfield(String hfield) {
 		this.hfield = hfield;
+	}
+
+	public Object getCacheObject() {
+		return cacheObject;
+	}
+
+	public void setCacheObject(Object cacheObject) {
+		this.cacheObject = cacheObject;
 	}
 }

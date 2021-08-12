@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.liu.cachespringbootstarter.annotation.Magic;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.Expression;
@@ -27,9 +28,17 @@ public class SpringElPaser implements Ipaser {
 	@Override
 	public CacheKeyDto getCacheAbleKey(MethodInvocation methodInvocation,
 			CacheAble cacheAble) {
-		String s = this.doGetCacheKey(methodInvocation.getThis(), methodInvocation.getMethod().getName(), methodInvocation.getArguments(), cacheAble.key(), null, null, false);
+		String s = this.doGetCacheKey(methodInvocation.getThis(), methodInvocation.getMethod().getName(),
+				methodInvocation.getArguments(), cacheAble.key(), null, null, false);
 		return new CacheKeyDto(s,null);
 
+	}
+
+	@Override
+	public CacheKeyDto getCacheMagicKey(MethodInvocation methodInvocation, Magic magic,Object returnValue) {
+		String s = this.doGetCacheKey(methodInvocation.getThis(), methodInvocation.getMethod().getName(), methodInvocation.getArguments(),
+				magic.key(), null, returnValue, true);
+		return new CacheKeyDto(s,returnValue);
 	}
 
 	/**
@@ -43,7 +52,7 @@ public class SpringElPaser implements Ipaser {
 	 *            key表达式
 	 * @param hfieldExpression
 	 *            hfield表达式
-	 * @param result
+	 * @param returnValue
 	 *            方法的返回结果
 	 * @param hasRetVal
 	 *            是否有返回值
@@ -51,7 +60,7 @@ public class SpringElPaser implements Ipaser {
 	 */
 	private String doGetCacheKey(Object target, String methodName,
 			Object[] arguments, String keyExpression, String hfieldExpression,
-			Object result, boolean hasRetVal) {
+			Object returnValue, boolean hasRetVal) {
 		// 如果CacheAble上的key不为空
 		if (StringUtils.isNotBlank(keyExpression)) {
 			// 如果不是表达式,直接返回
@@ -63,12 +72,13 @@ public class SpringElPaser implements Ipaser {
 		StandardEvaluationContext context = new StandardEvaluationContext();
 		//把参数设置进去
 		context.setVariable(SignalConstant.args,arguments);
+		context.setVariable(SignalConstant.RET_VAL,returnValue);
 		for (Map.Entry<String, Method> entry : methodConcurrentHashMap
 				.entrySet()) {
 			context.registerFunction(entry.getKey(), entry.getValue());
 		}
 		if (hasRetVal) {
-			context.setVariable(SignalConstant.RET_VAL, result);
+			context.setVariable(SignalConstant.RET_VAL, returnValue);
 		}
 		Expression expression = expressionConcurrentHashMap.get(keyExpression);
 		if (null == expression) {

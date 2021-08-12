@@ -21,6 +21,8 @@ public @interface CacheAble {
 
     TimeUnit timeUnit() default TimeUnit.SECONDS;
 
+    Magic magic() default @Magic(key = "");
+
     /**
      * 缓存的key
      * @return
@@ -38,6 +40,12 @@ public @interface CacheAble {
      * @return
      */
     boolean autoLoad() default false;
+
+    /**
+     * 自动加载的阈值 默认60秒
+     * @return
+     */
+    int autoLoadThreshold() default 60;
 
     /**
      * el表达式  解析缓存的key

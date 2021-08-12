@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 public class TestController {
     @Autowired
@@ -19,5 +21,10 @@ public class TestController {
     public String del(){
         testService.delString();
         return "del success";
+    }
+
+    @GetMapping("/magic")
+    public List<String> magicTest1(){
+        return testService.magicTest();
     }
 }

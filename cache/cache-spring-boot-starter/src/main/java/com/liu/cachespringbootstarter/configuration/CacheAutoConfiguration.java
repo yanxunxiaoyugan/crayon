@@ -6,6 +6,7 @@ import com.liu.cachespringbootstarter.beanPostprocessor.WarmUpBeanPostProcessor;
 import com.liu.cachespringbootstarter.cache.redis.RedisCacheManager;
 import com.liu.cachespringbootstarter.configuration.pointcut.MyPointcutAdvisor;
 import com.liu.cachespringbootstarter.handler.CacheHandler;
+import com.liu.cachespringbootstarter.handler.MagicHandler;
 import com.liu.cachespringbootstarter.interceptor.CacheAbleMethodInterceptor;
 import com.liu.cachespringbootstarter.interceptor.CacheDelMethodInterceptor;
 import com.liu.cachespringbootstarter.paser.Ipaser;
@@ -67,6 +68,10 @@ public class CacheAutoConfiguration {
         return new CacheAbleMethodInterceptor(cacheHandler);
     }
 
+    @Bean
+    public MagicHandler magicHandler(){
+        return new MagicHandler();
+    }
     @Bean
     public CacheDelMethodInterceptor cacheDelMethodInterceptor(CacheHandler cacheHandler) {
         return new CacheDelMethodInterceptor(cacheHandler);

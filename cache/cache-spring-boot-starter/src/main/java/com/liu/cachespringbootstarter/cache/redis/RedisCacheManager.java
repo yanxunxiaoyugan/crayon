@@ -1,5 +1,6 @@
 package com.liu.cachespringbootstarter.cache.redis;
 
+import io.lettuce.core.KeyValue;
 import io.lettuce.core.SetArgs;
 import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
 import org.springframework.stereotype.Component;
@@ -12,13 +13,16 @@ import io.lettuce.core.api.StatefulRedisConnection;
 import io.lettuce.core.api.sync.RedisCommands;
 
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
  * 使用lettuce连接redis
  */
 @Component
-public class RedisCacheManager {
+public class RedisCacheManager<T> {
 	private final RedisClient redisClient;
 	StatefulRedisConnection<String, String> connect;
 	private final Serial serial;
@@ -47,6 +51,12 @@ public class RedisCacheManager {
 
 	public Object get(String key) {
 		return sync.get(key);
+	}
+
+
+	public List<KeyValue<String, String>> mget(String... key){
+		List<KeyValue<String, String>> mget = sync.mget(key);
+		return mget;
 	}
 
 	public void delString(String key) {
