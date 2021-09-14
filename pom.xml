@@ -6,6 +6,7 @@
     <modules>
         <module>cache</module>
         <module>agent</module>
+        <module>jvmByteCode</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
