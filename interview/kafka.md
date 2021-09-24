@@ -70,6 +70,34 @@
       > * enable.auto.commit: 是否自动提交offset
       > * fetch.max.bytes: consumer一次最大获取的字节数，如果业务数据大于此值，那么consumer无法消费这个消息
       > * max.poll.records: 单次poll返回的最大消息数
+      > * heartbeat.interval.ms: 该值必须小于session.timeout.ms。每个consumer都会根据此值周期性的向group coordinator发送heartbeat，然后groupcoordinator给各个consumer响应。如果group coordinator给sonsumer的响应包好了 REBALANCE_IN_PROGRESS标识，各个consumer就知道已经发送了rebalance
+      > * connection.max.idle.ms: kakfa会周期性的关闭空闲连接
+      
+   5. kafka的consumer是有两个线程，一个是用户主线程，用来poll、rebalance，位移提交，异步任务结果的处理，，还有一个是心跳线程
+
+   6. consumer的位移
+
+      1. 常见的交付语义
+
+         > 1. at most once: 消息可能丢失，但不会重复处理
+         > 2. at least once：消息不会丢失，但是会重复消费
+         > 3. exactly once：消息不会丢失并且只会被消费一次
+         >
+         > 如果consumer在消费之前（poll消息之后）提交offset，consumer崩溃会导致消息丢失
+         >
+         > 如果consumer在消费之后提交offset，consumer崩溃来不及提交offset，会导致消息重复消费
+
+   7. rebalance触发条件
+
+      1. 组成员发送变化：加入新的consumer，consumer下线、崩溃
+      2. 组订阅的topic数发生变化：比如使用正则订阅topic
+      3. topic的分区数发生变化： topic增加的分区
+
+   8. 分区策略
+
+      1. round-robin
+      2. range
+      3. sticky
 
 8. 持久化
 
