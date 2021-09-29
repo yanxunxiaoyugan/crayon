@@ -6,28 +6,62 @@
 
 2. 流和生产者、消费者的区别
 
+3. kafka的topic和分区
+
+   1. isr、osr
+
+      > topic的分区leader负责维护和跟踪ISR集合中所有follower副本的滞后状态，当follower落后太多时，分区leader会把它从ISR中移除。如果OSR有follower追上来了，分区leader会把它从OSR转移到ISR
+
+   2. HW、LEO、ISR的联系
+
+      > ISR：和分区leader保持同步的folloer集合
+      >
+      > LEO: log end offset,是一个分区下一个即将写入消息的offset
+      >
+      > HW：ISR中最小的LEO就是整个分区的HW
+
+   
+
    > 流是一组从生产者到消费者的数据
 
-3. kafka的消费者把每个分区最后读取的偏移量储存在哪里？
+4. kafka的消费者把每个分区最后读取的偏移量储存在哪里？
 
    > 之前把偏移量存储在kafka或者zookeeper中，现在把偏移量存储在_consumer_offset的topic中，这个topic有50个分区
-   
-4. broker和集群
+
+5. broker和集群
 
    > 1. broker是集群的组成部分，每个集群有一个broker叫做controller，负责这个集群的管理工作，包括将分区分配给broker和监控broker
    > 2. 集群中的每个partition都有一个leader，当leader宕机后，其他ISR可以成为leader，之后生产者和消费者都要重新连接到新的leader
    > 3. 集群的好处：数据类型分离，安全需求隔离，多数据中心
 
-5. 保留消息
+6. 保留消息
 
    > kafka的默认保留策略：要么保留一段时间，要么保留到消息达到一定大小（10GB）
-   
-6. producer
 
-   1. 参数
+7. producer
+
+   1. kafka的消息变量
+
+      > String topic
+      >
+      > Intger partition
+      >
+      > Headers headers
+      >
+      > K key
+      >
+      > V value (value一般不为空，，为空就是墓碑消息)
+      >
+      > Long timestamp
+
+   2. kafka producer整体架构
+
+      ![image-20210929194309950](image-20210929194309950.png)
+
+   3. 参数
 
       > 1. ack all（所有的isr）
-      > 2. buffer.memory
+      > 2. buffer.memory：recordAccumulator的大小，默认为32MB
       > 3. 压缩 lz4 zstrand
       > 4. retries，重试可能造成重复发送，需要consumer去重处理
       > 5. retry.backoff.ms: 两次重试的停顿时间，防止频繁重试，默认100ms
@@ -36,8 +70,13 @@
       > 8. max.request.size: producer能够发送的最大消息大小
       > 9. request.timeout.ms: producer发送消息给broker后，broker需要在规定的时间给出响应。如果超过了这个时间没有收到broker的响应，会在回调函数中抛出异常
       > 10. max.in.flight.request.per.connection = 1,producer可以确保某一时刻只能发送一个请求，可以保证顺序发送
+      > 11. max.block.ms: 如果生产者的生产速度超过了sender线程的发送速度，会导致recordAccumulator空间不足。这是producer调用send方法要么阻塞要么抛出异常，阻塞的最大时间就是此配置
 
-   2. producer无消息丢失配置
+   4. 注意：
+
+      1. 主线程发过来的消息都会被追加到RecordAccumulator的某个Deque中，RecordAccumulator会为每个分区维护一个Deque，队列的内容就是ProducerBatch
+
+   5. producer无消息丢失配置
 
       > * block.on.buffer.full = true 想当于 max.block.ms.当内存缓冲区满了后，没超过此配置的时间producer会停止接受新消息，等待的时间超过此配置会抛出异常
       > * acks=all or -1 isr全部写入成功
@@ -51,7 +90,7 @@
       > * replication.factor > min.insync.replicas
       > * enable.auto.commit = false 取消自动提交
 
-7. kafka 的consumer
+8. kafka 的consumer
 
    1. consumer会把每个partition的offset提交到__consumer_offset
 
@@ -99,7 +138,7 @@
       2. range
       3. sticky
 
-8. 持久化
+9. 持久化
 
    1. RDB：
 

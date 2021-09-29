@@ -51,8 +51,8 @@
    > rehash具体执行步骤
    >
    > 	1. 给hash[2]分配hash[1]两倍的空间
-   >  	2. 在字典中维持一个计数器rehashidx，设置值为0
-   >  	3. 在rehash进行期间，每次对字典crud操作时，程序都会将hash1【rehashIdx】 rehash到hash2。rehash执行完后，将redisIdx加1
+   > 	2. 在字典中维持一个计数器rehashidx，设置值为0
+   > 	3. 在rehash进行期间，每次对字典crud操作时，程序都会将hash1【rehashIdx】 rehash到hash2。rehash执行完后，将redisIdx加1
    >
    > 在rehash执行期间，新加的key-value会被保存到新的hash表中，使用delete，find，set等操作回同时查两张hash表
    >
@@ -132,11 +132,16 @@
 
 12. 主从
 
+    1. 主从同步怎么实现的？
+
 13. 哨兵
 
     > 选举master过程
 
 14. 集群
+
+    1. 怎么实现数据分片
+    2. 怎么做故障转移和发现
 
 15. 先更新数据还是先更新缓存
 
