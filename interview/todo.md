@@ -1,0 +1,1 @@
+1. redis的hashTag
