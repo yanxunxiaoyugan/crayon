@@ -44,4 +44,6 @@
        > 继承RejectExecutionHandler类，重写rejectedExecution 方法
        >
        > 自定义策略：把任务序列化，持久到磁盘（或者数据库）。单点问题可以通过备份来解决
+       
+   13. JDK各个版本的变化
 

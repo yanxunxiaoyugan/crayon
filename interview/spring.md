@@ -1,12 +1,14 @@
 1. ioc生命周期
 
-2. beanFactory和factoryBean
+2. bean的作用域
 
-3. beanFactory和ApplicationContext
+3. beanFactory和factoryBean
 
-4. aop
+4. beanFactory和ApplicationContext
 
-5. 事务
+5. aop
+
+6. 事务
 
    
 
@@ -51,4 +53,7 @@
    >           boolean isCompleted; // 是否已完成
    >       } 
    >
-   > 5. 
+
+7. Spring MVC
+
+   1. 
