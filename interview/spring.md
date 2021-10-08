@@ -56,4 +56,7 @@
 
 7. Spring MVC
 
-   1. 
+   1. filter和interceptor的区别
+      1. filter是servlet规范定义的，interceptor是spring定义的
+      2. filter是通过filterChain实现的，interceptor是通过aop实现的
+      3. filter只在方法前后执行，interceptor还可以在异常前后执行
