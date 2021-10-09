@@ -119,14 +119,16 @@
 
    2. consumerGroup的分区策略
 
-   3. rebalance
+   3. kafkaConsumer.assign(List<TopicPartition> partition):可以订阅topic中的某个分区
+
+   4. rebalance
 
       > 1. rebalance规定了一个consumer group下的consumer如何达成一致来分配订阅某个topic的所有分区
       > 2. 
 
-   4. consumer.subscribe(list<String> ) 方法不是增量，而是覆盖
+   5. consumer.subscribe(list<String> ) 方法不是增量，而是覆盖
 
-   5. consumer的参数
+   6. consumer的参数
 
       > * session.timeout.ms: consumer group检测组内成员发送崩溃的时间
       > * max.poll.interval.ms: consumer处理逻辑的最大时间。如果consusmer的逻辑处理时间超过了此值，coordinator会把该consumer踢出改组，然后对该组进行Rebalance
@@ -137,9 +139,9 @@
       > * heartbeat.interval.ms: 该值必须小于session.timeout.ms。每个consumer都会根据此值周期性的向group coordinator发送heartbeat，然后groupcoordinator给各个consumer响应。如果group coordinator给sonsumer的响应包好了 REBALANCE_IN_PROGRESS标识，各个consumer就知道已经发送了rebalance
       > * connection.max.idle.ms: kakfa会周期性的关闭空闲连接
 
-   6. kafka的consumer是有两个线程，一个是用户主线程，用来poll、rebalance，位移提交，异步任务结果的处理，，还有一个是心跳线程
+   7. kafka的consumer是有两个线程，一个是用户主线程，用来poll、rebalance，位移提交，异步任务结果的处理，，还有一个是心跳线程
 
-   7. consumer的位移
+   8. consumer的位移
 
       1. 常见的交付语义
 
@@ -151,13 +153,13 @@
          >
          > 如果consumer在消费之后提交offset，consumer崩溃来不及提交offset，会导致消息重复消费
 
-   8. rebalance触发条件
+   9. rebalance触发条件
 
       1. 组成员发送变化：加入新的consumer，consumer下线、崩溃
       2. 组订阅的topic数发生变化：比如使用正则订阅topic
       3. topic的分区数发生变化： topic增加的分区
 
-   9. 分区策略
+   10. 分区策略
 
       1. round-robin
       2. range
