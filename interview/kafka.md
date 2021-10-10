@@ -152,20 +152,30 @@
          > 如果consumer在消费之前（poll消息之后）提交offset，consumer崩溃会导致消息丢失
          >
          > 如果consumer在消费之后提交offset，consumer崩溃来不及提交offset，会导致消息重复消费
+         
+      2. 使用commitAsync提交offset时，如果设置了retry也有可能造成重复消费。我们可以维护一个递增的序号来维护异步提交的顺序
 
-   9. rebalance触发条件
+   9. consum控制或关闭消费
 
-      1. 组成员发送变化：加入新的consumer，consumer下线、崩溃
-      2. 组订阅的topic数发生变化：比如使用正则订阅topic
-      3. topic的分区数发生变化： topic增加的分区
+      1. kafka使用pause和resume来暂停和恢复
 
-   10. 分区策略
+   10. rebalance触发条件
 
-      1. round-robin
-      2. range
-      3. sticky
+          1. 组成员发送变化：加入新的consumer，consumer下线、崩溃
+          2. 组订阅的topic数发生变化：比如使用正则订阅topic
+          3. topic的分区数发生变化： topic增加的分区
 
-9. 持久化
+   11. 分区策略
+
+          1. round-robin
+          2. range
+          3. sticky
+
+9. topic和partition
+
+   1. 
+
+10. 持久化
 
    1. RDB：
 
