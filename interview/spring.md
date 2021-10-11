@@ -60,3 +60,12 @@
       1. filter是servlet规范定义的，interceptor是spring定义的
       2. filter是通过filterChain实现的，interceptor是通过aop实现的
       3. filter只在方法前后执行，interceptor还可以在异常前后执行
+   
+8. 复习
+
+   1. bean的生命周期
+   2. 循环依赖
+   3. 父子容器
+   4. boot启动流程
+   5. 事务实现原理
+   6. 动态代理

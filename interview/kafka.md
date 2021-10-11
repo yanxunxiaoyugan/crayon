@@ -12,7 +12,9 @@
 
    1. isr、osr
 
-      > topic的分区leader负责维护和跟踪ISR集合中所有follower副本的滞后状态，当follower落后太多时，分区leader会把它从ISR中移除。如果OSR有follower追上来了，分区leader会把它从OSR转移到ISR
+      > topic的分区leader负责维护和跟踪ISR集合中所有follower副本的滞后状态，当follower落后太多时，分区leader会把它从ISR中移除。如果OSR有follower追上来了，分区leader会把它从OSR转移到ISR.
+      >
+      > AR在分配的时候就会被指定，只要不发生重分配，内部的顺序不变。而分区的ISR集合中的副本顺序可能会变
 
    2. HW、LEO、ISR的联系
 
@@ -21,6 +23,8 @@
       > LEO: log end offset,是一个分区下一个即将写入消息的offset
       >
       > HW：ISR中最小的LEO就是整个分区的HW
+      
+      
 
    
 
@@ -173,23 +177,118 @@
 
 9. topic和partition
 
-   1. 
+   1. partition的分区管理
 
-10. 持久化
+      1. 优先副本的管理(preferred replicas)
 
-   1. RDB：
+         >1. 当有broker下线时，把会该broker的leader分区转移到其他broker上（即进行leader选举其他follower成为新的leader）。极端情况下，会导致一个broker管理多个分区，导致负载不均衡。
+         >2. kafka中有一个优先副本的概念(preferred replicas)，会进行分区leader的负载均衡。这一行为也成为分区平衡。
+         >3. 实现：kafka的控制器会启动一个定时任务，轮训所有broker的节点，计算每个broker节点的分区不平衡率（broker中 非优先副本的leader个数/分区总数）是否超过leader.embalance.per.broker.percentage的，默认为10%。定时任务的执行周期为5分钟
+         >4. 配置：auto.leader.rebalance.enable:true 默认为true
 
-      > bgsave可以在客户端主动触发，也可以又定时任务触发，也可以在slave同步时触发
-      >
-      > 每次RDB文件都是替换的
-      >
-      > redis会压缩RDB文件，使用LZF算法
-      >
-      > 优点：文件紧凑，适合备份，恢复数据时快
-      >
-      > 缺点：无法秒级持久化，导致和redis数据有较大延迟、版本不兼容
+      2. 分区重分配
 
-   2. aof
+         1. 当某个节点的分区副本都处于不可用的状态，kafka不会将这些失效的分区副本迁移到集群中剩余可用的broker节点上，所以需要重分配
 
-      > 
+10. 日志存储
+
+    1. 文件结构![image-20211011131420670](image-20211011131420670.png)
+    2. 一个分区对应一个log（log实际上是一个文件夹）。例如创建一个"topic-log"的topic，分配4个分区，那么实际物理存储上表现为"topic-log-0","topic-log-1"等4个文件夹
+    3. 向log中追加消息时是顺序写的，只有最后一个logSegment才能执行写操作，一般把最后一个logSegment称为activeSegment。
+    4. 为了方便消息的检索，每个logSegment中的日志文件（*.log文件）都有对应的两个索引文件偏移量索引文件和时间戳索引文件（.index文件和.timeIndex文件），每个logSegment都有一个baseOffset，表示当前logSegment中的第一条消息的offset。偏移量是有一个long类型，日志文件和两个索引文件都是基于baseOffset命名的，名称的固定长度为20。实例图![image-20211011133236517](image-20211011133236517.png)
+       5. 日志格式
+             1. v0：kafka 0.10.0之前使用的日志格式![image-20211011140758940](image-20211011140758940.png)
+             2. v1：0.10.0-0.11.0使用的日志格式   ![image-20211011140855781](image-20211011140855781.png)
+             3. v2：0.11.0之后的日志格式 ![image-20211011141054433](image-20211011141054433.png)
+             4. v2版本的日志格式提供了事务、幂等等特性
+    6. 日志索引
+       1. 偏移量索引
+       2. 时间戳索引：找到的索引要去偏移量索引重新找一次，，然后才能确定具体的位置
+       3. 日志删除
+       4. 日志压缩
+    7. 页缓存、零拷贝（mmap和sendfile（sendfile的数据对应用不可见））
+
+11. Broker端
+
+    1. 协议设计
+       1. 请求头： ![image-20211011191149120](image-20211011191149120.png)
+          1. api_key: api标识，类似http的method。PRODUCE表示发送消息，fetch表示拉取消息
+          2. api_version：api的版本号
+          3. correlation_id： 客户端指定的一个数字来唯一标识这次请求，服务端在处理完请求之后会把同样的correlation_id回写到response中，这样客户端就能把某个请求和响应对应起来
+          4. client_id：客户端的id
+       2. 响应头：![image-20211011191922710](image-20211011191922710.png)
+       3. 
+    2. 时间轮
+       1. kafka存在大量的延时操作，比如延时生产，延时拉取，延时删除等。JDK中的Timer和DelayQueue的插入和删除的时间复杂度为O(nlogn)不能满足kafka的高性能要求，所以kafka基于时间轮的概念自定义实现了一个用于延时功能的定时器（SystemTimer），将插入和删除的时间复杂度都降为O（1），如图所示：![image-20211011192404415](image-20211011192404415.png)
+       2. 多层时间轮：有点像钟表（**还需复习**）
+    3. 延时操作
+    4. 控制器
+       1. controller负责管理整个集群中的所有分区和副本的状态。当某个分区的leader副本出现故障时，controller负责为改分区选举新的leader。当检测到某个分区的ISR发生变化时，controller负责通知其他broker更新metadata。
+       2. controller_epoch：存储在zk的/controller_epoch节点上是一个永久
+       3. 节点，用于记录controller发生变更的次数。初始值为1，当controller发生变更时，改值就加1。每个和controller交互的请求都会写到controller_epoch。如果请求的controller_epoch小于内存中的controller_epoch，说明是向过期的controller发送请求，这个请求是无效的。如果大于，说明已经选举了新的controller
+       4. controller处理事件图： ![image-20211011194527269](image-20211011194527269.png)
+    5. 使用kill - s TERM PIDS 或者 kill 15 PIDS 的方式来关闭进程
+    6. 分区leader的选举
+       1. 创建分区或分区上线（原先的leader下线）的选举策略：OftlinePartitionLeaderElectionStrategy，从AR列表中找出第一个存活的follower，并且这个follower在ISR中
+       2. 分区进行手动重分配也会执行leader的选举，策略为ReassignPartitionLeaderElectionStrategy，从重分配的AR列表中找出第一个存活的follower，并且这个follower在ISR中
+       3. 发生优先副本的选举时，直接将优先副本设置为leader，AR集合中的第一个副本就是优先副本
+       4. 某节点被优雅关闭时，ControlledShutdownPartitionLeaderElectionStrategy，从AR集合中找到一个存活的follower，并且这个副本在ISR中，同时确保这个follower不处于正在关闭的节点上
+    7. 参数
+
+12. 客户端
+
+    1. 分区策略
+       1. RangeAssignor（默认）：
+       2. RoundRobinAssignor：
+       3. StickyAssignor：
+    2. 消费者协调器和组协调器
+    3. consumer_offset
+    4. 事务
+
+13. 可靠性
+
+    1. 副本
+       1. 失效副本
+       2. ISR
+       3. LEO、HW
+       4. leader Epoch
+       5. 读写分离
+    2. 日志同步机制
+    3. 可靠性分析
+
+14. 监控
+
+    1. 监控数据来源
+    2. 消费滞后
+    3. 同步失效分区
+
+15. 高级应用
+
+    1. TTL
+    2. 延时队列
+    3. 死信队列和重试队列
+    4. 消息路由
+    5. 消息轨迹
+    6. 消息审计
+    7. 消息代理
+
+16. kafka的源码分析
+
+    1. 
+
+   17. RDB：
+
+       > bgsave可以在客户端主动触发，也可以又定时任务触发，也可以在slave同步时触发
+       >
+       > 每次RDB文件都是替换的
+       >
+       > redis会压缩RDB文件，使用LZF算法
+       >
+       > 优点：文件紧凑，适合备份，恢复数据时快
+       >
+       > 缺点：无法秒级持久化，导致和redis数据有较大延迟、版本不兼容
+
+   18. aof
+
+       > 
 
