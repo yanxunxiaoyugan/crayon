@@ -238,12 +238,53 @@
 12. 客户端
 
     1. 分区策略
-       1. RangeAssignor（默认）：
-       2. RoundRobinAssignor：
-       3. StickyAssignor：
+       1. RangeAssignor（默认）：先把消费者组内订阅某topic的消费者按字典序排序，然后按照消费者总数和分区总数进行整除。如果不够平均分配，那么字典序靠前的消费者会多分配一个分区。如果这样的topic存在多个，那么字典序靠前的消费者压力较大
+
+       2. RoundRobinAssignor：将消费者组内所有消费者即消费者订阅的所有主题按照字典序排序，然后轮训将分区依次分配给每个消费者。如果组内的消费者订阅的topic是不相同的，那么会有问题：![image-20211012095324228](image-20211012095324228.png)
+
+          
+
+       3. StickyAssignor：从0.11开始引入，为了解决两个问题：1、分区的分配尽可能均匀 2、分区的分配尽可能与上次分配的保持相同。当两个发生冲突时第一个目标优先于第二个目标
+
+       4. StickAssignor和ReoundRobinAssignor的区别
+
+          1. 如果组内订阅的topic是一致的，那么此时StickAssignor和ReoundRobinAssignor的分配是一样的。但是当组内有消费者下线时ReoundRobinAssignor会进行auto Rebalanece对剩余的消费者重新分配。而StickAssignor会只重分配下线的那个消费者的分区，对于原有的分区不变
+          2. 如果组内订阅的topic是不一致的，![image-20211012100315688](image-20211012100315688.png)![image-20211012100331033](image-20211012100331033.png)
+
     2. 消费者协调器和组协调器
+
+       1. 每个消费者组的子集在服务端有一个GroupCoordinator对其进行管理，而消费者的ConsumerCoordinator负责与GroupCoordinator进行交互
+       2. 发生Rebalance的原因：
+          1. 新的消费者加入消费者组
+          2. 消费者宕机（长时间GC，网络延迟导致未收到心跳）
+          3. 有消费者主动退出消费者组
+          4. 消费者组对应的GroupCordinator节点发生变更
+          5. 组内任一topic或topic的partition数量 发生了变化
+       3. a
+       4. 选举消费者组的leader： 第一个加入消费者组的消费者就是leader，如果leader下线，HashMap中第一个就是leader
+       5. 选举分区分配策略
+          1. 收集各个消费者支持的所有分配策略，组成候选集candidates
+          2. 每个消费者从candidate中找出自身支持的第一个策略，为这个策略投票
+          3. 选票最多的就是当前消费者组分配策略
+
     3. consumer_offset
+
+       1. 一般情况下，当集群中第一次消费者消费消息时，会自动创建这个topic
+
     4. 事务
+
+       1. kafka从0.11开始引入幂等和事务这两个特性，来实现exactly once semantics
+          1. 幂等：生产者在进行重试的时候有可能会重复写入消息，利用幂等特性可以避免这种情况
+             1. 开启方式：生产者的参数enable.idempotence: true。除了这个参数，也要保证（retries（大于0），acks（-1），max.in.flight.request.per.conneciont(不能大于5)不配错）
+             2. 为了实现幂等，kafka引入了producer id和sequence number。每个producer在初始化的时候都会分配一个pid，每条消息发送到每一个分区都一个sequence number，从0开始递增。生产者每发送一条消息就将<pid,partition>对于的sequence number加1。broker端在内存中为每一对<pid,partition>维护一个sequence number，只有当消息中的sequence  number= broker中的sequence number +1，broker才会接受这条消息。kafka的幂等只保证单个生产者幂等。
+          2. 事务：因为幂等只支持单分区，所有有了事务
+             1. 开启事务：生产者 transactional.id: {id},开启事务时候默认开启幂等。
+             2. transaction的id由用户显式设置。为了保证新的生产者启动之后具有相同的transactionid的旧生产者能立即失效，每个生产者获取pid的同时，还会获取一个单调递增的producer epoch。如果使用同一个transactionId启动两个生产者，先启动的生产者会报错
+             3. 缺点
+                1. 对于采用日志压缩策略的主体而言，事务中的某些消息有可能被清理（消息具有相同的key）
+                2. 事务中的消息可能分布在多个logSegment，当老的logSegment被删除时，消息可能丢失
+                3. 消费者通过seek消费消息时，可能会遗漏事务中的某些消息
+                4. 消费者在消费时，没有被分配到事务内的分区
 
 13. 可靠性
 
