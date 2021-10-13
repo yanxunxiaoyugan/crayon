@@ -1,14 +1,29 @@
-1. ioc生命周期
+1. 如何定义一个bean
 
-2. bean的作用域
+   1. xml文件
+   2. @Bean + Configuration + Compoentscan
+   3. @Component + Compoentscan
+   4. 自定义BeanDefinition，获取BeanFactory，然后把beanDefitioin注册进去
 
-3. beanFactory和factoryBean
+2. BeanDefinition
 
-4. beanFactory和ApplicationContext
+   1. 属性
+      1. scope（context中只有singleton和prototype）
+      2. bean来源（自定义、配置文件、spring内部bean）
+      3. ini-method
+      4. 是否懒加载
 
-5. aop
+3. ioc生命周期
 
-6. 事务
+4. bean的作用域
+
+5. beanFactory和factoryBean
+
+6. beanFactory和ApplicationContext
+
+7. aop
+
+8. 事务
 
    
 
@@ -54,14 +69,14 @@
    >       } 
    >
 
-7. Spring MVC
+9. Spring MVC
 
    1. filter和interceptor的区别
       1. filter是servlet规范定义的，interceptor是spring定义的
       2. filter是通过filterChain实现的，interceptor是通过aop实现的
       3. filter只在方法前后执行，interceptor还可以在异常前后执行
-   
-8. 复习
+
+10. 复习
 
    1. bean的生命周期
    2. 循环依赖
