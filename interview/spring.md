@@ -13,17 +13,23 @@
       3. ini-method
       4. 是否懒加载
 
-3. ioc生命周期
+3. 静态代理和动态代理、jdk代理和Cglib代理
 
-4. bean的作用域
+   1. 静态代理
+   2. 动态代理
+   3. 
 
-5. beanFactory和factoryBean
+4. ioc生命周期
 
-6. beanFactory和ApplicationContext
+5. bean的作用域
 
-7. aop
+6. beanFactory和factoryBean
 
-8. 事务
+7. beanFactory和ApplicationContext
+
+8. aop
+
+9. 事务
 
    
 
@@ -42,7 +48,7 @@
    >
    >    **TransactionDefinition.PROPAGATION_MANDATORY：** 如果当前存在事务，则加入该事务；如果当前没有事务，则抛出异常。（mandatory：强制性）
    >
-   >    
+   > 
    >
    >    **TransactionDefinition.PROPAGATION_REQUIRES_NEW：** 创建一个新的事务，如果当前存在事务，则把当前事务挂起。
    >
@@ -50,7 +56,7 @@
    >
    >    **TransactionDefinition.PROPAGATION_NEVER：** 以非事务方式运行，如果当前存在事务，则抛出异常。
    >
-   >    
+   > 
    >
    >    **TransactionDefinition.PROPAGATION_NESTED：** 如果当前存在事务，则创建一个事务作为当前事务的嵌套事务来运行；如果当前没有事务，则该取值等价于TransactionDefinition.PROPAGATION_REQUIRED。
    >
@@ -69,18 +75,35 @@
    >       } 
    >
 
-9. Spring MVC
+   1. 事务失效场景
+      1. 调用本类方法
+      2. 方法不是public：如果要加@Transactional在非public方法上，可以开启Aspectj代理
+      3. 数据库不支持事务
+      4. 没有被spring管理
+      5. 异常被吃掉
+
+10. Spring MVC
 
    1. filter和interceptor的区别
       1. filter是servlet规范定义的，interceptor是spring定义的
       2. filter是通过filterChain实现的，interceptor是通过aop实现的
       3. filter只在方法前后执行，interceptor还可以在异常前后执行
 
-10. 复习
+11. 复习
 
-   1. bean的生命周期
-   2. 循环依赖
-   3. 父子容器
-   4. boot启动流程
-   5. 事务实现原理
-   6. 动态代理
+   12. bean的生命周期
+
+   13. 循环依赖
+
+   14. 父子容器
+
+   15. springboot
+
+          1. 核心类
+                1. AnnotationConfigServletWebServerApplicationContext
+
+   16. boot启动流程
+
+   17. 事务实现原理
+
+   18. 动态代理
