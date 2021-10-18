@@ -97,10 +97,47 @@
 
    14. 父子容器
 
-   15. springboot
+   16. springboot
 
           1. 核心类
+                
                 1. AnnotationConfigServletWebServerApplicationContext
+                2. SpringFactoriesLoader: 负责加载META-INF/spring.factories，并放在Map<ClassLoader, MultiValueMap<String（接口全类名）, String（子类全类名）>>中
+                
+          2. 启动流程
+
+                > 1. springApplication构造方法
+                >    1. SpringApplication->SpringFactoriesLoader.(加载所有的spring.factories文件)
+                >    2. 获取spring.factories文件的ApplicationContextInitializer的子类，并实例化这些子类并根据order排序
+                >    3. springApplication把spring.factories中的ApplicationContextInitializer的子类实例赋值给initializers
+                >    4. springApplication把spring.factories中的ApplicationListener的子类实例赋值给listeners
+                >    5. 根据new RuntimeException().getStackTrace()获取当前线程的栈帧，，找到栈帧中第一个方法为Main的类，设置成mainApplicationClass
+                > 2. SpringApplication的Run方法
+                >    1. 获取spring.factories的SpringApplicationRunListener类，调用他们的start方法
+                >    2. 准备Environment
+                >    3. 输出Banner图片
+                >    4. 创建ApplicationContext：springMVC创建的是AnnotationConfigServletWebServerApplicationContext，然后在构造方法创建AnnotatedBeanDefinitionReader 和ClassPathBeanDefinitionScanner，在GenericApplicationContext创建DedaultListableBeanFactory。webflux创建的是AnnotationConfigReactiveWebServerApplicationContext。
+                >    5. 获取spring.factories的SpringBootExceptionReporter子类
+                >    6. repareContext（context，environment，listeners，args，banner）
+                >    7. refreshContext
+                >       1. prepareRefresh
+                >       2. obtianFreshBeanFactory
+                >       3. prepareBeanFactory
+                >       4. postProcessBeanFactory(beanFactory)
+                >       5. invokeBeanFactoryPostProcessors
+                >       6. registerBeanPostProcessor
+                >       7. intiMessageSource
+                >       8. initApplicationEventMulticaster
+                >       9. onRefresh
+                >       10. registListeners
+                >       11. finishBeanFactoryInitialization
+                >       12. finishRefresh
+                >    8. atferRefresh
+                >    9. listeners.started(context)
+                >    10. callRunners(context,applicationArguments)
+                >    11. listeners.running(context)
+                >
+                > 
 
    16. boot启动流程
 
