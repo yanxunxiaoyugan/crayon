@@ -100,7 +100,7 @@
    16. springboot
 
           1. 核心类
-                
+             
                 1. AnnotationConfigServletWebServerApplicationContext
                 2. SpringFactoriesLoader: 负责加载META-INF/spring.factories，并放在Map<ClassLoader, MultiValueMap<String（接口全类名）, String（子类全类名）>>中
                 
@@ -137,10 +137,29 @@
                 >    10. callRunners(context,applicationArguments)
                 >    11. listeners.running(context)
                 >
-                > 
+                
+          3. 自动装配原理
+
+                   1. 
 
    16. boot启动流程
 
-   17. 事务实现原理
+   18. spring aop
 
-   18. 动态代理
+          1. 概念
+
+             > aop要实现的就是在我们原来写的代码上，进行一定的扩展。比如说在方法执行前后、方法异常抛出后等地方进行拦截，然后做增强处理。aop的实现是把方法的生命周期告诉我们，然后我们去实现一个代理，通过代理对方法的生命周期进行增强。
+
+          2. 基础名词
+
+                1. pointcut
+                2. advice
+                3. advisor/aspect
+                4. proxy
+
+   19. 事务实现原理
+
+   20. 代理
+
+          1. 静态代理
+          2. 动态代理
