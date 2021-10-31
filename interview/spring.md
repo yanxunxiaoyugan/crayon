@@ -97,13 +97,69 @@
 
    14. 父子容器
 
-   15. springboot
+   16. springboot
 
           1. 核心类
+             
                 1. AnnotationConfigServletWebServerApplicationContext
+                2. SpringFactoriesLoader: 负责加载META-INF/spring.factories，并放在Map<ClassLoader, MultiValueMap<String（接口全类名）, String（子类全类名）>>中
+                
+          2. 启动流程
+
+                > 1. springApplication构造方法
+                >    1. SpringApplication->SpringFactoriesLoader.(加载所有的spring.factories文件)
+                >    2. 获取spring.factories文件的ApplicationContextInitializer的子类，并实例化这些子类并根据order排序
+                >    3. springApplication把spring.factories中的ApplicationContextInitializer的子类实例赋值给initializers
+                >    4. springApplication把spring.factories中的ApplicationListener的子类实例赋值给listeners
+                >    5. 根据new RuntimeException().getStackTrace()获取当前线程的栈帧，，找到栈帧中第一个方法为Main的类，设置成mainApplicationClass
+                > 2. SpringApplication的Run方法
+                >    1. 获取spring.factories的SpringApplicationRunListener类，调用他们的start方法
+                >    2. 准备Environment
+                >    3. 输出Banner图片
+                >    4. 创建ApplicationContext：springMVC创建的是AnnotationConfigServletWebServerApplicationContext，然后在构造方法创建AnnotatedBeanDefinitionReader 和ClassPathBeanDefinitionScanner，在GenericApplicationContext创建DedaultListableBeanFactory。webflux创建的是AnnotationConfigReactiveWebServerApplicationContext。
+                >    5. 获取spring.factories的SpringBootExceptionReporter子类
+                >    6. repareContext（context，environment，listeners，args，banner）
+                >    7. refreshContext
+                >       1. prepareRefresh
+                >       2. obtianFreshBeanFactory
+                >       3. prepareBeanFactory
+                >       4. postProcessBeanFactory(beanFactory)
+                >       5. invokeBeanFactoryPostProcessors
+                >       6. registerBeanPostProcessor
+                >       7. intiMessageSource
+                >       8. initApplicationEventMulticaster
+                >       9. onRefresh
+                >       10. registListeners
+                >       11. finishBeanFactoryInitialization
+                >       12. finishRefresh
+                >    8. atferRefresh
+                >    9. listeners.started(context)
+                >    10. callRunners(context,applicationArguments)
+                >    11. listeners.running(context)
+                >
+                
+          3. 自动装配原理
+
+                   1. 
 
    16. boot启动流程
 
-   17. 事务实现原理
+   18. spring aop
 
-   18. 动态代理
+          1. 概念
+
+             > aop要实现的就是在我们原来写的代码上，进行一定的扩展。比如说在方法执行前后、方法异常抛出后等地方进行拦截，然后做增强处理。aop的实现是把方法的生命周期告诉我们，然后我们去实现一个代理，通过代理对方法的生命周期进行增强。
+
+          2. 基础名词
+
+                1. pointcut
+                2. advice
+                3. advisor/aspect
+                4. proxy
+
+   19. 事务实现原理
+
+   20. 代理
+
+          1. 静态代理
+          2. 动态代理

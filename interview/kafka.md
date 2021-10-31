@@ -210,7 +210,8 @@
 
 11. Broker端
 
-    1. 协议设计
+    1. kafka包含了4个核心的api：kakfaProducer，kafkaConsumer，KafkaConnector，kafkaProcessor
+    2. 协议设计
        1. 请求头： ![image-20211011191149120](image-20211011191149120.png)
           1. api_key: api标识，类似http的method。PRODUCE表示发送消息，fetch表示拉取消息
           2. api_version：api的版本号
@@ -218,22 +219,22 @@
           4. client_id：客户端的id
        2. 响应头：![image-20211011191922710](image-20211011191922710.png)
        3. 
-    2. 时间轮
+    3. 时间轮
        1. kafka存在大量的延时操作，比如延时生产，延时拉取，延时删除等。JDK中的Timer和DelayQueue的插入和删除的时间复杂度为O(nlogn)不能满足kafka的高性能要求，所以kafka基于时间轮的概念自定义实现了一个用于延时功能的定时器（SystemTimer），将插入和删除的时间复杂度都降为O（1），如图所示：![image-20211011192404415](image-20211011192404415.png)
        2. 多层时间轮：有点像钟表（**还需复习**）
-    3. 延时操作
-    4. 控制器
+    4. 延时操作
+    5. 控制器
        1. controller负责管理整个集群中的所有分区和副本的状态。当某个分区的leader副本出现故障时，controller负责为改分区选举新的leader。当检测到某个分区的ISR发生变化时，controller负责通知其他broker更新metadata。
        2. controller_epoch：存储在zk的/controller_epoch节点上是一个永久
        3. 节点，用于记录controller发生变更的次数。初始值为1，当controller发生变更时，改值就加1。每个和controller交互的请求都会写到controller_epoch。如果请求的controller_epoch小于内存中的controller_epoch，说明是向过期的controller发送请求，这个请求是无效的。如果大于，说明已经选举了新的controller
        4. controller处理事件图： ![image-20211011194527269](image-20211011194527269.png)
-    5. 使用kill - s TERM PIDS 或者 kill 15 PIDS 的方式来关闭进程
-    6. 分区leader的选举
+    6. 使用kill - s TERM PIDS 或者 kill 15 PIDS 的方式来关闭进程
+    7. 分区leader的选举
        1. 创建分区或分区上线（原先的leader下线）的选举策略：OftlinePartitionLeaderElectionStrategy，从AR列表中找出第一个存活的follower，并且这个follower在ISR中
        2. 分区进行手动重分配也会执行leader的选举，策略为ReassignPartitionLeaderElectionStrategy，从重分配的AR列表中找出第一个存活的follower，并且这个follower在ISR中
        3. 发生优先副本的选举时，直接将优先副本设置为leader，AR集合中的第一个副本就是优先副本
        4. 某节点被优雅关闭时，ControlledShutdownPartitionLeaderElectionStrategy，从AR集合中找到一个存活的follower，并且这个副本在ISR中，同时确保这个follower不处于正在关闭的节点上
-    7. 参数
+    8. 参数
 
 12. 客户端
 
@@ -314,8 +315,6 @@
     7. 消息代理
 
 16. kafka的源码分析
-
-    1. 
 
    17. RDB：
 

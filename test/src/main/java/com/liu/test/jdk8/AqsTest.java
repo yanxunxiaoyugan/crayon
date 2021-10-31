@@ -6,20 +6,25 @@ import java.util.concurrent.locks.ReentrantLock;
 public class AqsTest {
     public static void main(String[] args) {
 
-
-        UUID uuid = UUID.randomUUID();
-        System.out.println(uuid);
-
-
         ReentrantLock lock = new ReentrantLock(true);
         try{
-            lock.lock();
             lock.lock();
             Thread thread = new Thread(() ->{
                 lock.lock();
             });
             thread.start();
-        }finally {
+
+            Thread thread1 = new Thread(() ->{
+                lock.lock();
+            });
+            thread1.start();
+
+            lock.lock();
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
 //            lock.unlock();
 //            lock.unlock();
         }
