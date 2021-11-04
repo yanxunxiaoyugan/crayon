@@ -1,9 +1,15 @@
 1. jdk
 
    1. nio
-      1. 三大组件？
-      2. epoll原理？和select的区别？边缘触发和水平触发？惊群问题？
-      3. nio空轮训bug？netty怎么解决？
+      1. socket通信机制
+      2. io多路复用模型
+      3. IO模型和java网络编程模型
+      4. 三大组件？
+      5. epoll原理？和select的区别？边缘触发和水平触发？惊群问题？
+      6. netty？
+      7. 零拷贝？
+      8. tomcat的nio
+      9. nio空轮训bug？netty怎么解决？
       
    2. 反射
 
@@ -31,64 +37,123 @@
          >
          > list：有序，可重复，list可用过下标来访问，时间复杂度（插入：O（n），contain：O（n））
 
-      2. ArrayList扩容机制？
+      2. fail-fast机制
 
+         > 集合内部会维护一个modCount，初始值为0，改之前会进行cas判断modCount和expectedModecount是否一致，不一致会抛出异常。每次对集合进行增删改完之后都会对modCount++
+
+      3. ArrayList：
+
+         > 1. ArrayList的默认容量是10
+         > 2. 当ArrayList的容量不够时，会进行扩容，扩容后的大小是原来的1.5倍：newCapacity = oldCapacity + (oldCapacity >> 1)
+         > 3. 扩容时会把原数组的数据copy到新数组：System.arraycopy(0,oldsrc,0,newsrc,length)
+      > 4. 
+      
+   4. ArrayList扩容机制？
+      
          > 
-
-      3. ArratList和Vertor区别？
-
-         > ArrayList: 线程不安全，扩容时1.5倍扩容
+      
+   5. ArratList和Vertor区别？
+      
+      > ArrayList: 线程不安全，扩容时1.5倍扩容
          >
          > Vertor: 线程安全，扩容时翻倍扩容
 
-      4. ArrayList和LinkedList区别？
-
+      6. ArrayList和LinkedList区别？
+      
          > ArrayList:
-         >
+      >
          > LinkedList:
 
-      5. Hashmap、hashTable和hashSet区别？
+      7. Hashmap、hashTable和hashSet区别？
 
-      6. HashMap
-         1. put流程？
-
-            > 1. 现在entry数组有没有初始化，如果没有就初始化
-            > 2. 计算参数key的hash，算出该key应该在数组中的位置
-            > 3. 拿到该位置的node，
-
-         2. 扩容流程？
-
-         3. hashMap的长度为什么是2的幂次方？
-
-            1. 计算数组下标时可以把取余运算转换成位运算
-      2. 扩容比较快，高一位为0位置不变，高一位为1的位置=（当前位置+原始数组长度）。整个过程不用重新计算hash值
-
-   4. 为什么要把hashCOde右移16位？
-
-      1. 扰动函数：使高位也能干扰hash值，增加了随机性
-
-      5. 并发安全？
-
+      8. HashMap的node层级结构
+      
+      1. 示例图：![image-20211104190205463](image-20211104190205463.png)
+         2. 123
+      
+      9. HashMap
+         1. 特性
+      
+            > 1. hashMap的存取是没有顺序的
+            > 2. KV都可以为null
+            > 3. 多线程下该类是不安全的
+            > 4. JDK8是数组+链表+红黑树，JDK7是数组+链表
+            > 5. 初始容量和装载因子是性能的关键，一般不要动
+            > 6. HashMap是懒汉式的，只有put数据才会是初始化
+            > 7. 双向链表和红黑树是共存的（数组里有的Node是链表，有的Node是红黑树）
+            > 8. 对于传入的两个key，会强制排序，决定是向左还是向右
+            > 9. 链表转换成红黑树后会努力将root节点和table[i]节点融合成一个
+            > 10. 如果同一个节点的链表数据节点个数 > `TREEIFY_THRESHOLD=8`且数组长度 >= `MIN_TREEIFY_CAPACITY=64`，则会将该链表进化位`RedBlackTree`,如果`RedBlackTree`中节点个数小于`UNTREEIFY_THRESHOLD=6`会退化为链表
+      
+         2. 为什么负载因子是0.75
+      
+            > 1. 负载因子提高了空间的利用率，但是增加了冲突的概率会增加链表的长度，可能导致查询和插入性能降低
+            >
+            > 2. 负载因子很低性能会好点，但是会浪费空间，
+            > 3. 0.75在空间和时间上做了很好折中
+      
+         3. 为什么转换成树的阈值是8？
+      
+            > 8=0.75*12（16* * 0.75）是基于泊松分布算出来，当长度为8时树化的几率比较低。TreeNode的大小是链表node的两倍，所以要尽可能避免树化
+      
+         4. 为什么树化还要判断数组长度大于64？
+      
+            > 避免hashMap建立初期，冲突概率比较大，此时应该去扩容而不是树化
+      
+         5. get流程
+      
+            > 1. 计算key的hash值，算出对应数组的下标
+            > 2. 如果数组位置为null，返回null
+            > 3. 如果不为null，看当前node是否equals key。相等则返回
+            > 4. 如果table[i]是treeNode，按红黑树的查找
+            >    1. 先获得根节点，左节点，右节点。
+            >    2. 根据 左节点 < 根节点 < 右节点 对对数据进行逐步范围的缩小查找。
+            >    3. 如果实现了Comparable方法则直接对比。
+            >    4. 否则如果根节点不符合则递归性的调用find查找函数。
+            > 5. 如果是链表，遍历链表，找到node equals key的那个node
+      
+         6. put流程？
+      
+            > 1. 对key计算hash值
+            > 2. 现在entry数组有没有初始化，如果没有就初始化
+            > 3. 计算参数key的hash，算出该key应该在数组中的位置
+            > 4. 如果table[i]==null,直接放进去，如果node和当前key一样，进行覆盖
+            > 5. 如果是树，putTreeVal
+            > 6. 如果是链表，遍历链表，如果key之前存在，进行覆盖。不存在就在链表的后面添加，如果是添加还需要判断需不需要树化
+      
+         7. 扩容流程？
+      
+         8. hashMap的长度为什么是2的幂次方？
+      
+            1. 计算数组下标时可以把取余运算转换成位运算，速度更快
+            2. 扩容比较快，高一位为0位置不变，高一位为1的位置=（当前位置+原始数组长度）。整个过程不用重新计算hash值
+      
+         9. 为什么要把hashCode右移16位？(h = key.hashCode()) ^ (h >>> 16)
+      
+            1. 扰动函数：使高位也能参与运算，这样得到的hash值就不止和地位相关，增加了随机性，尽可能使数据均匀分布。之前tomcat被爆漏洞就是因为hash算法太简单了
+      
+      10. 并发安全？
+      
          1. hashmap没有使用任何的锁机制，所以是线程不安全的
          2. 可能造成并发安全的操作：
             1. 一写多读
             2. 扩容
+      
+   4. ConcurretnHashMap
 
-      7. ConcurretnHashMap
+   5. CopyOnWriteList
 
-      8. CopyOnWriteList
-
-      9. jdk新特性
-         1. 1.8的新特性
-            1. lamdba
-            2. 接口的deafult方法
-            3. stream
-            4. localDatetime
-            5. Optional
-            6. 独占缓存行注解
-         2. jdk9特性
-         3. jdk15特性：
-            1. 去除synchronized的偏向锁
+   6. jdk新特性
+      1. 1.8的新特性
+         1. lamdba
+         2. 接口的deafult方法
+         3. stream
+         4. localDatetime
+         5. Optional
+         6. 独占缓存行注解
+      2. jdk9特性
+      3. jdk15特性：
+         1. 去除synchronized的偏向锁
 
 2. jvm
 
@@ -106,8 +171,9 @@
 
    3. 什么情况发生OOm异常
 
-      > 1. 内存泄漏
-      > 2. 内存不够
+      > 1. 堆内存溢出：内存泄漏、内存不够
+      > 2. 方法区溢出：动态创建了大量的类
+      > 3. 堆外内存：容易内存泄漏
 
    4. 判断对象是否是垃圾？
 
@@ -323,15 +389,45 @@
 
    1. 多线程理解？什么是并发安全？
 
-   2. java实现同步方式？
+   2. 竞态条件？
 
-   3. 如何创建一个线程？如何指定线程的执行逻辑？
+      > 当两个线程竞争同一资源时，如果对资源的访问顺序敏感，就称存在竞态条件
 
-   4. 线程的6种状态？
+   3. 临界区？
 
-   5. 对象头？每个对象占多大内存？markWord？monitor？
+      > 导致竞态条件发生的代码区称为临界区
 
-   6. volatile？
+   4. Java的内存模型
+
+   5. as-if-serial
+
+      > as-if-serial是指不管怎么重排序，单线程的程序的执行结果不能该表
+
+   6. java实现同步方式？
+
+      1. ReetranLock
+
+      2. synchronized
+
+      3. 区别：
+
+         > 1. lock是java语言级别的api，synchronized是jvm提供的关键字
+         > 2. 
+
+   7. 如何创建一个线程？如何指定线程的执行逻辑？
+
+   8. 线程的6种状态？
+
+      1. new
+      2. runnable
+      3. blocked
+      4. waiting
+      5. time waiting
+      6. terminated
+
+   9. 对象头？每个对象占多大内存？markWord？monitor？
+
+   10. volatile？
 
       1. 可见性和有序性怎么保证？
 
@@ -340,69 +436,65 @@
          > 1. cpu的缓存值有4个状态：独占，共享，已修改，失效
          > 2. 当状态是共享转为已修改时，会通知其他cpu，使其他cpu缓存的值变成失效
 
-   7. synchronized
+   11. synchronized
 
-      1. 锁升级？偏向锁->自旋锁->重量级锁
+       1. 锁升级？偏向锁->自旋锁->重量级锁
 
-         > 1. 线程第一次获取锁的时候，
+          > 1. 线程第一次获取锁的时候，
 
-      2. jdk15为什么去掉偏向锁？
+       2. jdk15为什么去掉偏向锁？
 
-         > 水电费
+          > 水电费
 
-      3. synchronized怎么保证可重入性？
+       3. synchronized怎么保证可重入性？
 
-         > synchronized锁住对象的时候会有个计数器，记录了持有锁的线程获取锁的次数，执行完synchronize代码块之后，该计数器就会-1，如果计数器为0，那么就释放锁了。
+          > synchronized锁住对象的时候会有个计数器，记录了持有锁的线程获取锁的次数，执行完synchronize代码块之后，该计数器就会-1，如果计数器为0，那么就释放锁了。
 
-      4. synchronize抛出异常会怎么样？
+       4. synchronize抛出异常会怎么样？
 
-         > synchronized重入之后，内层抛出异常，跳出synchronized代码块，会释放锁
+          > synchronized重入之后，内层抛出异常，跳出synchronized代码块，会释放锁
 
-   8. volatile和synchronized的区别？
+   12. volatile和synchronized的区别？
 
-   9. lock和synchronized的区别？
+   13. lock和synchronized的区别？
 
-   10. 并发容器和同步容器
+   14. final?
+
+   15. 并发容器和同步容器
 
        1. 同步容器：
        2. 并发容器：
 
-   11. 什么是死锁？
+   16. aqs
+
+   17. 什么是死锁？
 
        > 死锁是指两个或两个以上的进程在执行过程中，由于竞争资源造成的一种互相等待的现象，若无外力干扰，他们都无法继续执行下去。
 
-   12. 死锁发生的原因？
+   18. 死锁发生的原因？
 
        > 1. 系统资源不足
        > 2. 进程运行获取资源的顺序不合理
        > 3. 资源分配不当
 
-   13. 死锁发生条件
+   19. 死锁发生条件
 
        > 1. 互斥条件：一个资源每次只能被一个进程使用。
        > 2. 占有且等待：一个进程因请求资源而阻塞时，对已获得的资源保持不放。
        > 3. 不可强行占有：进程（线程）已获得的资源，在未使用完之前，不能强行剥夺。
        > 4. 循环等待条件：若干进程（线程）之间形成一种头尾相接的循环等待资源关系。
 
-   14. Java死锁怎么排查和解决？
+   20. Java死锁怎么排查和解决？
 
        > 1. 是用arthas的thread -b可以找出当前阻塞其他线程的线程
 
-   15. cpu100%怎么排查和解决？
+   21. cpu100%怎么排查和解决？
 
-   16. Java的内存模型？
+   22. threadLocal
 
-   17. as-if-serial?
+   23. fastThreadLocal
 
-   18. final？
-
-   19. aqs
-
-   20. threadLocal
-
-   21. fastThreadLocal
-
-   22. 线程池
+   24. 线程池
 
        1. 七个核心参数？
 
@@ -530,40 +622,49 @@
 
    11. 三级缓存怎么实现？怎么解决循环依赖
 
-       > 
+       1. 示例图：![image-20211104125223448](image-20211104125223448.png)
 
-   11. spring aop的理解？基本概念？
+   12. spring aop的理解？基本概念？
 
-   12. spring aop实现原理？
+       1. ![image-20211104132212599](image-20211104132212599.png)
 
-   13. @Qualifier注解？
+   13. spring aop实现原理？
 
-   14. spring mvc流程？
+   14. @Qualifier注解？
 
-   15. @RequestMapping实现原理？
+   15. spring mvc流程？
 
-   16. spring boot自动装配原理？
+   16. @RequestMapping实现原理？
 
-   17. spring boot怎么实现热部署？
+   17. spring boot自动装配原理？
 
-       1. devtools
+   18. spring boot怎么实现热部署？
 
-   18. spring 事务实现方式？
+       1. devtools：
+
+          > 1. devtools会监听classpath下的文件变动（通过ClassPathChangeEvent事件），发生了变动就会stop引用，gc，清楚对象引用，重新加载新文件
+
+       2. 原理：
+
+          > 1. 使用了两个classLoader，一个classLoader加载那些不会变的类（第三方的jar包），另一个classLoader加载会更改的类称为：restart classLoader。
+          > 2. 在代码有更改的时候，原来的reset ClassLoader被丢弃，重新创建一个restart classLoader来重启应用
+
+   19. spring 事务实现方式？
 
        1. 编程式事务
        2. 声明式事务 
           1. 使用@Transactional注解
 
-   19. 事务传播级别？？
+   20. 事务传播级别？？
 
-   20. spring用了哪些设计模式
+   21. spring用了哪些设计模式
 
        1. 单例：spring的bean默认就是单例的
        2. 工厂模式：使用工厂模式创建bean
 
-   21. 
+   22. 
 
-   22. 源码？
+   23. 源码？
        1. spring session源码
           1. MapSession.getId(): 产生一个UUID作为session
 
@@ -1047,15 +1148,35 @@
        2. 主观下线和客观下线
 
           1. 主观下线：
+             1. 每个sentinel节点每隔1s会向主节点、从节点、其他sentinel节点发送ping命令做心跳检测。当这些节点超过down-after-milliseconds没有恢复，sentinel节点就会认为这些节点已经被下线了，这就是主观下线。
           2. 客观下线：
+             1. 当sentinel主观下线的节点是主节点时，该sentinel节点会通过sentinel is-master-down-by-addr （<ip> <port> <current_epoch> <runid>）命令向其他sentinel节点询问对该主节点的判断，当超过{quorum}个sentinel节点认为该主节点确实有问题，那么该sentinel节点会做出客观下线的决定
 
        3. sentinel领导者选举流程
 
-       4. 故障转移
+          1. 如果sentinel节点对于主节点做出了客观下线的决定，需要进行故障转移，故障转移只需要一个sentinel节点来完成即可，所以sentinel节点之间会做i一个领导者选举的工作，选出一个sentinel节点作为领导者进行故障转移的工作。redis使用raft算法实现领导者选举
+
+             > 1. 每个在线的sentinel节点都有资格成为领导者,当他确认主节点主观下线的时候，会向其他sentinel节点发送sentinel is-master-down-by-addr命令，要求将自己设置为领导者
+             > 2. 收到命令的sentinel节点，如果没有同意过其他sentinel节点的sentinel is-master-down-by-addr命令，则同意该请求，否则拒绝
+             > 3. 如果发起sentinel is-master-down-by-addr命令的sentinel节点发现自己票数大于等于quorum，那么它将成为领导者。
+             > 4. 如果所有的sentinel投完票之后，没有sentinel节点成为领导者，那么进行下一次选举
+             > 5. 选举的过程非常快，基本上谁先完成客观下线，谁就是领导者
+
+       4. 故障转移：sentinel选出的领导者节点进行故障转移
+
+          1. 在从节点列表中选出一个节点作为新的主节点
+             1. 过滤：“不健康”（主观下线、断线）、5秒内没有回复过Sentinel节点ping响应、与主节点失联超过down-after-milliseconds*10秒
+             2. 选择slave-priority（从节点的优先级）最高的从节点，如果不存在，继续往下找
+             3. 选择复制偏移量最大的从节点，如果不存在，继续往下找
+             4. 选择runid最小的从节点
+          2. sentinel领导者会对第一步选出来的从节点执行 slaveof no one命令让该节点成为主节点
+          3. sentinel领导向剩余从节点发送命令，让他们成为新主节点的从节点，复制规则和parallel-syncs参数有关
+          4. sentinel集合会将原来的主节点更新为从节点，并保持关注，待其重新上线后命令其复制新的主节点
 
    11. 集群
 
        1. 怎么实现数据分片
+          1. 一致性hash
        2. 怎么做故障转移和发现
 
    12. redis的hash槽？
@@ -1217,14 +1338,16 @@
 
 10. dubbo
 
-    1. dubbo支持的协议？每种协议的优缺点
+    1. dubbo支持的协议？每种协议的优缺点？
     2. dubbo调用过程？
     3. dubbo怎么实现熔断？
-    4. spi机制
+    4. spi机制？
     5. 怎么实现限流？
     6. 序列化实现原理？
     7. dubbo怎么支持事务？
     8. dubbo的负载均衡？
+    9. 注册中心挂了后，dubbo还能进行服务调用吗
+       1. dubbo会把再内存中保存一份，还会持久化到磁盘
 
 11. 系统设计
 
@@ -1270,6 +1393,9 @@
        2. tcpdump -i ens192 -nn host 192.168.3.63 port 5533 -Xs0
     2. 为什么fork函数成功调用后有两个返回值？
        1. 因为子进程在复制时复制了父进程的堆栈，所以两个进程都停留在fork函数中
+    3. arthas缺少类库
+       1. sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+       2. apk add libstdc++
 
 16. 其他
 
