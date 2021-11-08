@@ -69,8 +69,9 @@
       8. HashMap的node层级结构
       
       1. 示例图：![image-20211104190205463](image-20211104190205463.png)
-         2. 123
-      
+         
+      2. 123
+         
       9. HashMap
          1. 特性
       
@@ -138,12 +139,23 @@
              2. 可能造成并发安全的操作：
                 1. 一写多读
                 2. 扩容
+          
+      12. 为什么使用红黑树而不是跳表
       
-   4. ConcurretnHashMap
+          1. 红黑树稳定
+          2. 浪费空间
+      
+   6. ConcurretnHashMap
 
-   5. CopyOnWriteList
+         1. 为什么使用红黑树而不是跳表
 
-   6. jdk新特性
+               > 1. 会有重复元素
+               > 2. 红黑树需要调整，加锁困难
+               > 3. 
+
+   7. CopyOnWriteList
+
+   8. jdk新特性
       1. 1.8的新特性
          1. lamdba
          2. 接口的deafult方法
@@ -412,7 +424,8 @@
       3. 区别：
 
          > 1. lock是java语言级别的api，synchronized是jvm提供的关键字
-         > 2. 
+         > 2. synchronized不需要手动释放锁，reentranLock需要手动释放锁
+         > 3. synchronized不可终端，reentranLock获取锁可以设置超时时间，可以被打断
 
    7. 如何创建一个线程？如何指定线程的执行逻辑？
 
