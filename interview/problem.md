@@ -525,7 +525,8 @@
 
        3. 公平锁和非公平锁的区别
 
-          1. 
+          1. 非公平锁调用lock后，会先尝试cas抢锁，然后才去调用treAcquire
+          2. treAcquire方法，如果此时state= 0，公平锁会判断队列中是否有线程处于等待状态，而非公平锁直接抢锁。
 
    21. 什么是死锁？
 
@@ -568,11 +569,15 @@
           > 6. TimeUnit:
           > 7. time:
 
-       2. 线程池的锁？
+       2. 四种默认的线程池？
 
-       3. 自定义拒绝策略？
+       3. 的锁？
 
+       4. 自定义拒绝策略？
+       
           > 序列化 然后保存起来
+       
+       5. 线程池怎么实现维持核心线程数的？
 
 4. 计网
 
@@ -694,76 +699,131 @@
 5. 操作系统
 
    1. 进程和线程
+   2. 进程怎么通信？
+   3. 线程怎么通信？
 
 6. spring
 
    1. 为什么spring不同class来建立bean，而要用beanDefinition？
 
-      > 
+      > class的信息太少，只描述了类信息
+      >
+      > 而beanDefinition描述了spring的bean的元信息，包含了类信息、属性、依赖关系等。beanDefinition可以在容器的初始化阶段被BeanDefinitionRegistryPostProcessor构造和注册，被BeanFactoryPostProcessor修改
 
-   2. bean的生命周期？
+   2. BeanDefinitionRegistry
+
+      1. BeanDefinitionRegistry` 是维护 `BeanDefinition` 的注册中心，它内部存放了 IOC 容器中 bean 的定义信息，同时 `BeanDefinitionRegistry` 也是支撑其它组件和动态注册 Bean 的重要组件。在 SpringFramework 中，`BeanDefinitionRegistry` 的实现是 `DefaultListableBeanFactory
+      
+   3. beanFactoryPostProcessor
+
+      1. BeanFactoryPostProcessor` 是容器的扩展点，它用于 IOC 容器的生命周期中，所有 `BeanDefinition` 都注册到 `BeanFactory` 后回调触发，用于访问 / 修改已经存在的 `BeanDefinition` 。与 `BeanPostProcessor` 相同，它们都是容器隔离的，不同容器中的 `BeanFactoryPostProcessor不会相互起作用
+
+   4. bean的生命周期？
 
       1. 生命周期图：![image-20211101202059474](image-20211101202059474.png)
-      2. 注意：spring只帮助我们管理singleton的bean的生命周期。对于prototype的bean，spring在创建好了bean之后就不会再管理其生命周期了
+      2. 示例图2：![image-20211115173002303](image-20211115173002303.png)
+      3. 注意：spring只帮助我们管理singleton的bean的生命周期。对于prototype的bean，spring在创建好了bean之后就不会再管理其生命周期了
 
-   3. bean的scope？
+   5. bean的scope？
 
       > 在spring context中只定义了singleton和prototype两个scope
       >
       > 在spring web中新增了request session等scope
 
-   4. spring aop实现原理
+   6. 实例化bean的方式
 
-      > 就是把目标对象进行代理，然后暴露出方法的生命周期（执行之前、执行之后、异常、整合起来的环绕），然后对方法的生命周期地方对方法进行增强
+      1. 构造器实例化
+      2. 静态工厂实例化
+      3. 实例工厂实例化（factory bean）
 
-   5. 静态代理和动态代理的区别？
+   7. 注册bean的方式
 
-      1. 静态代理：
+      1. xml
+      2. @Component+@ComponentScan
+      3. @Bean+@Configuuration+@ComponentScan
+      4. @Import
+      5. FactoryBean
 
-         1. 概念：为每个需要被代理的类实现一个代理类
+   8. @PostConstruct、InitializaingBean.afterPropertiesSet()、init-method执行顺序
 
-         > 1. 需要硬编码，而且要为每个需要被代理的类生成其实现，扩展性不高 但是性能高
-         > 2. 如果被代理的类增加了方法，代理也必须增加响应的方法
+      1. @PostConstruct：@PostConstruct注解会被一个专门的BeanPostProcessor来处理（InitDestroyAnnotationBeanPostPorcessor），在它的postProcessBeforeInitialization方法会调用@PostConstruct注解的方法
+      2. InitializainBean：在invokeInitMethods方法里，先调用InitializaingBean的afterPropertiesSet，然后调用init-mehtod方法
+      3. init-method:
+      4. 示例图：![image-20211115104505089](image-20211115104505089.png)
+      5. 对比：![image-20211115104819000](image-20211115104819000.png)
 
-      2. 动态代理：
+   9. beanFactory和applicationContext的区别？
 
-         1. 概念：在运行时，通过字节码技术动态生成代理类（java有成熟的方案给我们用：jdk动态代理和cglib动态代理）
+      1. 示例图：![image-20211115163727511](image-20211115163727511.png)
 
-   6. jdk动态代理和cglib动态代理的区别？
+   10. Bean的生命周期有几种控制方式？有什么区别？
 
-      1. jdk动态代理：Proxy.newProxyInstance(classLoader,interface[],invocationHandler)
+       1. beanPostProcessor（@PostConstruct）
+       2. InitiaingBean
+       3. init-method
 
-         > 1. 被jdk代理的对象必须实现接口
-         >
-         > 1. 通过实现InvocationHandlet接口创建自己的调用处理器
-         >
-         > 2. 通过为Proxy类指定ClassLoader对象和一组interface来创建动态代理
-         >
-         > 3. 通过反射机制获取动态代理类的构造函数，其唯一参数类型就是调用处理器接口类型
-         >
-         > 4. 通过构造函数创建动态代理类实例，构造时调用处理器对象作为参数参入
-         >
-         > JDK动态代理是面向接口的代理模式，如果被代理目标没有接口那么Spring也无能为力。
+   11. 单例bean和原型bean有什么区别？
 
-      2. cglib动态代理
+   12. spring的environment？
 
-         > 1. Spring在运行期间通过 CGlib继承要被动态代理的类，重写父类的方法被cglib代理的.
-         > 2. 对象的方法不能是final，因为cglib是通过继承的方式来增强的
+       1. environment是spring内置的一种环境抽象，主要是用来描述applicationContext的运行时的一些配置信息和构件信息，比如properties以及profiles。通过${}占位符可以获取properties的属性信息，profile可以用来指定构件，构件可以理解为一组配置信息
 
-   7. jdk的动态代理为什么不能代理类？
+   13. @Async的循环依赖
 
-      1. 简单点来说就是生成的代理类extends Proxy。而java是单继承的，所以如果被代理类继承了别的类是没办法再去继承Proxy
-      2. 源码分析：
+   14. spring aop实现原理
 
-   8. spring 默认 用什么代理？
+       > 就是把目标对象进行代理，然后暴露出方法的生命周期（执行之前、执行之后、异常、整合起来的环绕），然后对方法的生命周期地方对方法进行增强
 
-      > spring framework默认使用jdk动态代理
-      >
-      > 但是spring boot默认使用cglib动态代理
+   15. 静态代理和动态代理的区别？
 
-   9. ioc的初始化过程？
+       1. 静态代理：
 
-   10. beanFactory和applicationContext那个才是ioc容器？
+          1. 概念：为每个需要被代理的类实现一个代理类
+
+          > 1. 需要硬编码，而且要为每个需要被代理的类生成其实现，扩展性不高 但是性能高
+          > 2. 如果被代理的类增加了方法，代理也必须增加响应的方法
+
+       2. 动态代理：
+
+          1. 概念：在运行时，通过字节码技术动态生成代理类（java有成熟的方案给我们用：jdk动态代理和cglib动态代理）
+
+   16. jdk动态代理和cglib动态代理的区别？
+
+      17. jdk动态代理：Proxy.newProxyInstance(classLoader,interface[],invocationHandler)
+
+          > 1. 被jdk代理的对象必须实现接口
+          >
+          > 1. 通过实现InvocationHandlet接口创建自己的调用处理器
+          >
+          > 2. 通过为Proxy类指定ClassLoader对象和一组interface来创建动态代理
+          >
+          > 3. 通过反射机制获取动态代理类的构造函数，其唯一参数类型就是调用处理器接口类型
+          >
+          > 4. 通过构造函数创建动态代理类实例，构造时调用处理器对象作为参数参入
+          >
+          > JDK动态代理是面向接口的代理模式，如果被代理目标没有接口那么Spring也无能为力。
+
+      18. cglib动态代理
+
+          > 1. Spring在运行期间通过 CGlib继承要被动态代理的类，重写父类的方法被cglib代理的.
+          > 2. 对象的方法不能是final，因为cglib是通过继承的方式来增强的
+
+   19. jdk的动态代理为什么不能代理类？
+
+       1. 简单点来说就是生成的代理类extends Proxy。而java是单继承的，所以如果被代理类继承了别的类是没办法再去继承Proxy
+       2. 源码分析：
+
+   20. spring 默认 用什么代理？
+
+       > spring framework默认使用jdk动态代理
+       >
+       > 但是spring boot默认使用cglib动态代理
+
+   21. this调用导致aop失效（即this调用没有走代理类）
+
+       1. 
+
+   22. beanFactory和applicationContext那个才是ioc容器？
 
       > beanFactory: 定义了ioc容器最基础的功能
       >
@@ -781,15 +841,38 @@
 
        1. 示例图：![image-20211104125223448](image-20211104125223448.png)
 
-   13. spring aop的理解？基本概念？
+   13. spring 和spring boot的关系
 
-       1. ![image-20211104132212599](image-20211104132212599.png)
+       1. spring和spring mvc整合会有父子容器的概念，spring boot只有一个容器
 
-   14. spring aop实现原理？
+   14. spring aop的理解？基本概念？
 
-   15. @Qualifier注解？
+       1. target：被代理的对象
+       2. proxy：代理对象，代理对象=target+advice
+       3. Joinpoint：连接点，target中定义的所有方法
+       4. pointcut：被增强的连接点
+       5. advice：增强的代码
+       6. aspect：切面，pointcut+advice=切面
+       7. weaving：织入，将advice应用到target然后生成proxy对象的过程
+       8. Interceptor
+       9. MethodInterceptor
+       10. ConstructorInterceptor
+       11. Incocation
+       12. ![image-20211104132212599](image-20211104132212599.png)
+       13. 怎么概述aop
+           1. AOP 面向切面编程，全称 Aspect Oriented Programming ，它是 OOP 的补充。OOP 关注的核心是对象，AOP 的核心是切面（Aspect）。AOP 可以在不修改功能代码本身的前提下，使用运行时动态代理的技术对已有代码逻辑增强。AOP 可以实现组件化、可插拔式的功能扩展，通过简单配置即可将功能增强到指定的切入点。
 
-   16. spring mvc流程？
+   15. 多个切面怎么确定执行顺序？
+
+       1. 默认的切面执行顺序是根据切面类按照字母表的顺序来的
+       2. 手动排序：实现Ordered接口的方法，返回值越小越先执行。默认是Intger.MAX_VALUE。
+       3. 手动排序：使用@Order注解也可以指定order
+
+   16. spring aop实现原理？
+
+   17. @Qualifier注解？
+
+   18. spring mvc流程？
 
        > 1. dispatcherServlet:
        >
@@ -805,11 +888,11 @@
        >
        > 6. 总结：检查request类型-->获取匹配的Handlemethod-->查找拦截器-->组成HandlerExecutionChain执行链-->获取方法执行链对象的适配器（HandlerAdapter）-->然后反射执行业务方法
 
-   17. @RequestMapping实现原理？
+   19. @RequestMapping实现原理？
 
-   18. spring boot自动装配原理？
+   20. spring boot自动装配原理？
 
-   19. spring boot怎么实现热部署？
+   21. spring boot怎么实现热部署？
 
        1. devtools：
 
@@ -820,22 +903,22 @@
           > 1. 使用了两个classLoader，一个classLoader加载那些不会变的类（第三方的jar包），另一个classLoader加载会更改的类称为：restart classLoader。
           > 2. 在代码有更改的时候，原来的reset ClassLoader被丢弃，重新创建一个restart classLoader来重启应用
 
-   20. spring 事务实现方式？
+   22. spring 事务实现方式？
 
        1. 编程式事务
        2. 声明式事务 
           1. 使用@Transactional注解
 
-   21. 事务传播级别？？
+   23. 事务传播级别？？
 
-   22. spring用了哪些设计模式
+   24. spring用了哪些设计模式
 
        1. 单例：spring的bean默认就是单例的
        2. 工厂模式：使用工厂模式创建bean
 
-   23. 
+   25. 
 
-   24. 源码？
+   26. 源码？
        1. spring session源码
           1. MapSession.getId(): 产生一个UUID作为session
 
@@ -1300,7 +1383,7 @@
        > 2. 区分度高
        > 3. 短索引
    > 4. 建立的索引符合最左前缀原则
-   
+
     1. 前缀索引？
        
        > 对文本或者字符串的前几个字符建立索引
@@ -1355,17 +1438,21 @@
 
    22. 主从复制？
 
-   23. 一个6亿的表a，一个3亿的表b，通过外间tid关联，你如何最快的查询出满足条件的第50000到第50200中的这200条数据记录
+   14. 为什么会发送主从同步延迟？
 
-   24. 主从一致性校验？
+   15. 怎么解决主从同步延迟？
 
-   25. 如何分库分表？
+   16. 一个6亿的表a，一个3亿的表b，通过外间tid关联，你如何最快的查询出满足条件的第50000到第50200中的这200条数据记录
 
-   26. 如何实现跨库分页查询？
+   17. 主从一致性校验？
 
-   27. 分库分表之后怎么平滑上线？
+   18. 如何分库分表？
 
-   28. limit 1000000很慢怎么解决
+   19. 如何实现跨库分页查询？
+
+   20. 分库分表之后怎么平滑上线？
+
+   21. limit 1000000很慢怎么解决
 
 9. redis
 
@@ -1661,7 +1748,12 @@
 
    22. 延时队列？
 
-   23. redis如何保证双写一致性？先更新缓存还是先更新数据库
+   21. redis优化策略？
+
+       1. 管道:
+       2. 减少socket连接
+
+   22. redis如何保证双写一致性？先更新缓存还是先更新数据库
 
        1. 三个经典的缓存模式：
 
@@ -1700,27 +1792,27 @@
           2. 使用数据库的binlog来异步淘汰key：![image-20211031185738410](image-20211031185738410.png)
           3. 123
 
-   24. redis内存耗尽后怎么办？
+   23. redis内存耗尽后怎么办？
 
        1. 内存淘汰策略
 
-   25. redis怎么做大数据量的插入？
+   24. redis怎么做大数据量的插入？
 
        ```cat data.txt | redis-cli --pipe```
 
-   26. 如何解决redis的并发竞争key的问题？
+   25. 如何解决redis的并发竞争key的问题？
 
        1. 分布式锁
        2. 消息队列
 
-   27. 1亿个key，10万个key是已知前缀，怎么把它们全找出来？
+   26. 1亿个key，10万个key是已知前缀，怎么把它们全找出来？
 
        1. keys：会阻塞redis
        2. scan：一次取批，最后汇总。存在重复的概率，需要在客户端进行一次去重
 
-   28. mysql有2000w数据，redis只存20w数据，怎么保证redis的数据就是热数据
+   27. mysql有2000w数据，redis只存20w数据，怎么保证redis的数据就是热数据
 
-   27. 如何排查redis性能问题？
+   28. 如何排查redis性能问题？
 
        1. api或者数据结构使用不合理
 
@@ -1749,7 +1841,7 @@
 
           5. 网络
 
-   28. redis的内存划分
+   29. redis的内存划分
 
        1. 自身内存
        2. 对象内存
@@ -1759,7 +1851,7 @@
           3. aof缓冲区
        4. 内存碎片
 
-   29. redis子进程消耗内存
+   30. redis子进程消耗内存
 
        > Transparent Huge Pages（THP）机制:复制内存页的单位从4KB变 
        >
@@ -1767,21 +1859,21 @@
        >
        > 消耗
 
-   30. redis的hot key？
+   31. redis的hot key？
 
        1. redis4.0.3自带hot key发现机制。使用redis-cli --hotkey即可
 
-   31. redis怎么删除大key（指某个key的value很大）？
+   32. redis怎么删除大key（指某个key的value很大）？
 
        > 1. 如果线上redis出现大key，不可立即执行del，因为del会造成阻塞，导致其他请求超时->redis连接池耗尽->依赖redis的业务出现异常
        > 2. 解决方案：
        >    1. 系统负载低的时候
 
-   32. 主库挂怎么办》？
+   33. 主库挂怎么办》？
 
        1. 使用哨兵，把从库提升为主库
 
-   33. 性能优化？
+   34. 性能优化？
 
        1. master不做任务持久化工作，slave可以开启持久化
        2. master和slave在同一个局域网
@@ -1849,6 +1941,12 @@
     9. 延迟队列？
     10. 敏感数据过滤设计？
     11. rpc设计？
+    12. 设计 一个系统，每天有100亿条数据，需要在后台做实时展示和查找？
+        1. nginx负载均衡，消息队列存储、多线程读取、批量插入、数据分库分表
+        2. 消息队列满了怎么办（消费速度跟不上生产）
+        3. 批量插入失败怎么办？
+        4. 分库分表怎么办
+        5. 怎么解决数据迁移问题
 
 13. netty
 

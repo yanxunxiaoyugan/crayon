@@ -6,7 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 public class AqsTest {
     public static void main(String[] args) {
         Thread main = Thread.currentThread();
-        ReentrantLock lock = new ReentrantLock(true);
+        ReentrantLock lock = new ReentrantLock();
         try{
             lock.lock();
             Thread thread = new Thread(() ->{
@@ -35,7 +35,7 @@ public class AqsTest {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            lock.unlock();
+//            lock.unlock();
 //            lock.unlock();
         }
         boolean locked = lock.isLocked();
