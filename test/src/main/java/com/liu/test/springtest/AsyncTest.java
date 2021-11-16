@@ -9,9 +9,9 @@ public class AsyncTest {
     public void async1(){
         System.out.println("1:"+Thread.currentThread().getName());
         this.async2();
-        ((AsyncTest) AopContext.currentProxy()).async2();
+//        ((AsyncTest) AopContext.currentProxy()).async2();
     }
-    @Async
+
     public void async2(){
         System.out.println("2:"+Thread.currentThread().getName());
     }

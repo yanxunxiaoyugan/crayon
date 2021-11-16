@@ -874,25 +874,33 @@
 
    18. spring mvc流程？
 
-       > 1. dispatcherServlet:
+       > 1. dispatcherServlet:把请求交给handlerMapping
        >
-       > 2. handlerMapping
+       > 2. handlerMapping：handlerMapping的作用就是根据url去匹配handler，找到了handler之后，把这次请求涉及到了的拦截器和handler一起封装起来，组成一个HanlerExecutionChain（链条），然后返回给dispatcherServlet
        >
-       > 3. 拦截器
+       > 3. dispatcherServlet拿到HanlerExecutionChain后，交给HandlerAdapter去执行。注意看 `HandlerAdapter` 与 Handler 的交互：执行 Handler 之后，虽然我们写的返回值基本都是返回视图名称，或者借助 `@ResponseBody` 响应 json 数据，但在 WebMvc 的框架内部，最终都是封装了一个 `ModelAndView` 对象，返回给 `HandlerAdapter` 。`HandlerAdapter` 再把这个 `ModelAndView` 对象交给 `DispatcherServlet` ，这部分的活也就干完了
        >
-       > 4. controller
+       > 4. dispatcherServlet拿到handlerAdapter返回的ModelAndView后，交给ViewResolver
        >
-       > 5. 视图解析器
+       > 5. 拦截器
+       >
+       > 6. controller
+       >
+       > 7. 视图解析器
        >
        >    > SpringMVC定义了两个接口来操作这两个过程：参数解析器HandlerMethodArgumentResolver和返回值处理器HandlerMethodReturnValueHandler
        >
-       > 6. 总结：检查request类型-->获取匹配的Handlemethod-->查找拦截器-->组成HandlerExecutionChain执行链-->获取方法执行链对象的适配器（HandlerAdapter）-->然后反射执行业务方法
+       > 8. 总结：检查request类型-->获取匹配的Handlemethod-->查找拦截器-->组成HandlerExecutionChain执行链-->获取方法执行链对象的适配器（HandlerAdapter）-->然后反射执行业务方法
 
    19. @RequestMapping实现原理？
 
-   20. spring boot自动装配原理？
+   20. @Response原理
 
-   21. spring boot怎么实现热部署？
+       1. 在handlerAdapter交给controller处理完请求后，会对returnValue进行处理
+
+   21. spring boot自动装配原理？
+
+   22. spring boot怎么实现热部署？
 
        1. devtools：
 
@@ -903,22 +911,22 @@
           > 1. 使用了两个classLoader，一个classLoader加载那些不会变的类（第三方的jar包），另一个classLoader加载会更改的类称为：restart classLoader。
           > 2. 在代码有更改的时候，原来的reset ClassLoader被丢弃，重新创建一个restart classLoader来重启应用
 
-   22. spring 事务实现方式？
+   23. spring 事务实现方式？
 
        1. 编程式事务
        2. 声明式事务 
           1. 使用@Transactional注解
 
-   23. 事务传播级别？？
+   24. 事务传播级别？？
 
-   24. spring用了哪些设计模式
+   25. spring用了哪些设计模式
 
        1. 单例：spring的bean默认就是单例的
        2. 工厂模式：使用工厂模式创建bean
 
-   25. 
+   26. 
 
-   26. 源码？
+   27. 源码？
        1. spring session源码
           1. MapSession.getId(): 产生一个UUID作为session
 
