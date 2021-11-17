@@ -870,13 +870,15 @@
 
    16. spring aop实现原理？
 
+       1. 使用优先级高的beanPostProcessor
+
    17. @Qualifier注解？
 
    18. spring mvc流程？
 
        > 1. dispatcherServlet:把请求交给handlerMapping
        >
-       > 2. handlerMapping：handlerMapping的作用就是根据url去匹配handler，找到了handler之后，把这次请求涉及到了的拦截器和handler一起封装起来，组成一个HanlerExecutionChain（链条），然后返回给dispatcherServlet
+       > 2. handlerMapping：handlerMapping的作用就是根据url去匹配handler（其实是HandlerMathod），找到了handler之后，把这次请求涉及到了的拦截器和handler一起封装起来，组成一个HanlerExecutionChain（链条），然后返回给dispatcherServlet
        >
        > 3. dispatcherServlet拿到HanlerExecutionChain后，交给HandlerAdapter去执行。注意看 `HandlerAdapter` 与 Handler 的交互：执行 Handler 之后，虽然我们写的返回值基本都是返回视图名称，或者借助 `@ResponseBody` 响应 json 数据，但在 WebMvc 的框架内部，最终都是封装了一个 `ModelAndView` 对象，返回给 `HandlerAdapter` 。`HandlerAdapter` 再把这个 `ModelAndView` 对象交给 `DispatcherServlet` ，这部分的活也就干完了
        >
@@ -893,6 +895,11 @@
        > 8. 总结：检查request类型-->获取匹配的Handlemethod-->查找拦截器-->组成HandlerExecutionChain执行链-->获取方法执行链对象的适配器（HandlerAdapter）-->然后反射执行业务方法
 
    19. @RequestMapping实现原理？
+
+       1. 先解析请求的url，拿到path
+       2. RequestMappingHandlerMapping有个属性mappingRegistry，mappingRegistry里面有个pathLookup（linkedMultiValueMap），里面存放了path->AbstractHandlerMethodMapping的映射
+       3. 根据path找AbstractHandlerMethodMapping，找不到就报404，找到了就返回MethodHandler
+       4. 把HandlerMethod和拦截器封装成链条返回
 
    20. @Response原理
 
