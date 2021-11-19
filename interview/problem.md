@@ -187,6 +187,7 @@
          6. 独占缓存行注解
       2. jdk9特性
       3. jdk15特性：
+         
          1. 去除synchronized的偏向锁
 
 2. jvm
@@ -879,6 +880,7 @@
    12. 三级缓存怎么实现？怎么解决循环依赖
 
        1. 示例图：![image-20211104125223448](image-20211104125223448.png)
+       2. 示例图2：![img](17395320ad095cfb~tplv-t2oaga2asx-watermark.awebp)
 
    13. spring 和spring boot的关系
 
@@ -909,7 +911,8 @@
 
    16. spring aop实现原理？
 
-       1. 使用优先级高的beanPostProcessor
+       1. 使用优先级最高的beanPostProcessor：AnnotationAwareAspectJAutoProxyCreator
+       2. 在creatBean方法之后，doCreateBean方法之前会对bean进行一次增强
 
    17. @Qualifier注解？
 
@@ -942,9 +945,14 @@
 
    20. @Response原理
 
-       1. 在handlerAdapter交给controller处理完请求后，会对returnValue进行处理
+       1. 在handlerAdapter交给controller处理完请求后，会对returnValue进行处理（调用handlerReturnValue方法），里面会找到MessageConvert，messageCOnvert对返回值进行处理
 
    21. spring boot自动装配原理？
+
+       1. SpringBootApplication注解：ComponentScan+EnableAutoConfiguration+SpringBootConfiguration（等价于Configuration）
+       2. EnableConfiguration import 了AutoConfigurationImportSelector类
+       3. AutoConfigurationImportSelector里面会使用SpringFactoriesLoader.loadFactoryNames，加载spring.factories文件的内容，把里面的类放到ioc容器
+       4. 之后ioc解析beanDefinition的时候，在spring.factories的配置类就生效了
 
    22. spring boot怎么实现热部署？
 
@@ -964,6 +972,10 @@
           1. 使用@Transactional注解
 
    24. 事务传播级别？？
+
+       1. Requierd
+       2. new
+       3. nested：savepoint机制
 
    25. spring用了哪些设计模式
 
@@ -2089,21 +2101,21 @@
    2. 
     
 2. 怎么跨线程传递THreadLocal
-    
+   
    > 使用阿里的TTL：对ThreadLocal进行store和relay
-    
+   
 3. 生产者消费者模型？（三种方案）
-    
+   
     4. 如果一个Java进程突然消失了，你会怎么去排查这种问题？
     
    1. linux的OOM killer
-    
+   
       > 该机制会监控那些占用内存过大的进程，为了防止内存耗尽而把该进程杀掉
           >
       > egrep -i 'killed process' /var/log/messages
-    
+   
        2. jvm自身故障
-    
+   
           > jvm发生致命错误导致崩溃时，会生成一个hs_err_pid_xxx.log文件，默认情况在这个文件在工作目录，也可以指定： -XX:ErrorFile=/var/log/hs_err_pid<pid>.log
-    
+   
     5. 出现大量502怎么解决？

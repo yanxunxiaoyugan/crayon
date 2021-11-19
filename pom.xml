@@ -7,6 +7,10 @@
         <module>cache</module>
         <module>agent</module>
         <module>jvmByteCode</module>
+        <module>dubbo-test</module>
+        <module>dubbo-test/dubbo-protocol</module>
+        <module>dubbo-test/consumer</module>
+        <module>dubbo-test/provider</module>
     </modules>
     <parent>
         <groupId>org.springframework.boot</groupId>
