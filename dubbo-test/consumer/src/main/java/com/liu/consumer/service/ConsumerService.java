@@ -8,4 +8,8 @@ import org.springframework.stereotype.Service;
 public class ConsumerService {
     @DubboReference
     private UserSerivce userSerivce;
+
+    public String demo(Integer id){
+        return userSerivce.getUserId(id).toString();
+    }
 }

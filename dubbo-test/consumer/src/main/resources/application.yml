@@ -1,0 +1,22 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: consumer-demo
+  datasource:
+    url: jdbc:mysql://121.4.78.71
+    username: liubenwei
+    password: liubenwei
+dubbo:
+  application:
+    name: consumer-demo
+  registry:
+    address: nacos://127.0.0.1:8848
+  protocol:
+    name: dubbo
+    port: 20882
+    threads: 1
+  consumer:
+    group: demo
+    version: 1.0
+    check: false
