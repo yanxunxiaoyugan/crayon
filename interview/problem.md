@@ -744,52 +744,60 @@
       4. tcp有拥塞控制
       5. tcp是一对一的，udp支持单播，多播
 
-   5. http和https的区别？
+   5. tcp的keepalive
 
-   6. 对称加密和非对称加密？
+      1. 用来判断通信双方网络的可用性
 
-   7. http请求和响应报文格式？
+   6. 为什么有了tcp的keepalive还需要应用层的心跳
 
-   8. http常见状态码和请求头?
+      1. tcp的keepalive只能判断双方网络是可用的，无法判断双方应用都能正常发送/接受请求
+
+   7. http和https的区别？
+
+   8. 对称加密和非对称加密？
+
+   9. http请求和响应报文格式？
+
+   10. http常见状态码和请求头?
 
       1. 200/206/301/302/404/502
       2. Content-Type：
       3. host
       4. User-agent
 
-   9. XSS和csrf
+   11. XSS和csrf
 
-      1. csrf：从别的网站跳转到已登陆的网站
-         1. 使用token
-         2. 使用http的refer
-         3. csrf示例图：![image-20211123194508023](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20211123194508023.png)
-      2. XSS：向网站内注入js脚本
-         1. 禁止js读取cookie
+       1. csrf：从别的网站跳转到已登陆的网站
+          1. 使用token
+          2. 使用http的refer
+          3. csrf示例图：![image-20211123194508023](C:\Users\Administrator\AppData\Roaming\Typora\typora-user-images\image-20211123194508023.png)
+       2. XSS：向网站内注入js脚本
+          1. 禁止js读取cookie
 
-   10. 长连接和短连接？
+   12. 长连接和短连接？
 
-   11. redis session共享？
+   13. redis session共享？
 
-   12. http only？
+   14. http only？
 
-   13. http1.1新特性？
+   15. http1.1新特性？
 
        1. 长连接
        2. host
        3. range头：允许只请求某个资源的一部分，返回206
 
-   14. http2.0新 特性？dubbo使用http2
+   16. http2.0新 特性？dubbo使用http2
 
        1. 新的二进制格式。http使用二进制传输数据
        2. 多路复用。同一个连接允许同时发生多个请求
        3. 头部压缩
        4. 服务器推送
 
-   15. restful？幂等？
+   17. restful？幂等？
 
-   16. post和get区别？
+   18. post和get区别？
 
-   17. https连接过程
+   19. https连接过程
 
        1. 数字证书：
 
@@ -810,17 +818,17 @@
              > 4. 客户端生成对称秘钥，使用服务端的公钥加密，发送到服务端
              > 5. 服务端使用自己的私钥解密，获取对称秘钥，使用对称秘钥加密数据
 
-   18. 大量time_wait怎么处理
+   20. 大量time_wait怎么处理
 
        1. 原因：频繁创建断开连接
        2. 解决方案：使用长连接
 
-   19. 大量close_time怎么处理
+   21. 大量close_time怎么处理
 
        1. 原因：被动关闭的一方没有主动发送fin包
        2. 解决：程序忘记调用close方法
 
-   20. 浏览器输入一个域名发生了什么？
+   22. 浏览器输入一个域名发生了什么？
        1. 解析域名
        2. tcp连接
        3. ssl连接
@@ -857,9 +865,10 @@
 
    4. bean的生命周期？
 
-      1. 生命周期图：![image-20211101202059474](image-20211101202059474.png)
-      2. 示例图2：![image-20211115173002303](image-20211115173002303.png)
-      3. 注意：spring只帮助我们管理singleton的bean的生命周期。对于prototype的bean，spring在创建好了bean之后就不会再管理其生命周期了
+      1. createBean()会调用AbstractAutowireCapableBeanFactory的initialzeBean(),这个方法会先执行BeanNameAware，BeanClassLoaderAware，BeanFactoryAware，然后调用BeanPostProcessor。在ApplicationContextAwareProcessor这个BeanPostprocessor中，会调用其他的Aware方法，比如ApplicationContextAware、EnvironmentAware
+      2. 生命周期图：![image-20211101202059474](image-20211101202059474.png)
+      3. 示例图2：![image-20211115173002303](image-20211115173002303.png)
+      4. 注意：spring只帮助我们管理singleton的bean的生命周期。对于prototype的bean，spring在创建好了bean之后就不会再管理其生命周期了
 
    5. bean的scope？
 
@@ -1301,57 +1310,63 @@
        2. 生产者发送数据之前，向事务协调器发送addPartitionsToTxnRequest，事务协调器将该<Transaction,Topic,Partiton>存于__transaction_state内，将其状态置为begin
        3. 
 
-   45. kafka什么地方需要选举？这些地方的选举策略是什么
+   45. kafka怎么保证exactly once
 
-   46. 失效副本是什么？有什么应对措施
+       1. kafka的exactly once保证的是生产者到broker的幂等，是通过幂等+事务实现的
+       2. 幂等保证了生产者到单个partition不会出现重复消息
+       3. 事务保证了生产者到多个partition不会出现重复消息
 
-   47. 多副本下，各个副本的HW和LEO的演变过程
+   46. kafka什么地方需要选举？这些地方的选举策略是什么
 
-   48. kafka为什么不支持读写分离？
+   47. 失效副本是什么？有什么应对措施
+
+   48. 多副本下，各个副本的HW和LEO的演变过程
+
+   49. kafka为什么不支持读写分离？
 
        1. 数据一致性
 
-   49. kafka在可靠性方面做了哪些改进（HW,LeaderEpoch）
+   50. kafka在可靠性方面做了哪些改进（HW,LeaderEpoch）
 
        1. HW：消费者只能消费HW之前的数据
        2. leader epoch：leader的纪元信息，每当leader变更一次，leader epoch就会加1.解决数据不一致的问题
 
-   50. kafka怎么实现私信队列和重试队列
+   51. kafka怎么实现私信队列和重试队列
 
        1. 重试队列：当消费者多次消费失败后，将消息发送到重试队列
        2. 
 
-   51. kafka的延时队列
+   52. kafka的延时队列
 
        1. 在发送延时消息的时候并不是先投递到要发送的真实主题（real_topic）中，而是先投递到一些 Kafka 内部的主题（delay_topic）中，这些内部主题对用户不可见，然后通过一个自定义的服务拉取这些内部主题中的消息，并将满足条件的消息再投递到要发送的真实的主题中，消费者所订阅的还是真实的主题
 
-   52. kafka怎么做消息审计
+   53. kafka怎么做消息审计
 
-   53. kakfa怎么做消息轨迹
+   54. kakfa怎么做消息轨迹
 
        1. 封装客户端 埋点监控
 
-   54. kakfa的配置参数
+   55. kakfa的配置参数
 
-   55. kafka的监控指标
+   56. kafka的监控指标
 
-   56. 怎么计算Lag（read_uncommitted和read_committed状态下不同）
+   57. 怎么计算Lag（read_uncommitted和read_committed状态下不同）
 
-   57. kafka的优缺点（对比rocketmq，rabbitmq）
+   58. kafka的优缺点（对比rocketmq，rabbitmq）
 
-   58. kafka的过程中有什么问题？怎么就解决
+   59. kafka的过程中有什么问题？怎么就解决
 
-   59. 怎么极大程度上保证kafka的可靠性
+   60. 怎么极大程度上保证kafka的可靠性
 
-   60. 消息的堆积处理？
+   61. 消息的堆积处理？
 
-   61. kafka的主题与分区内部是如何存储的，有什么特点？
+   62. kafka的主题与分区内部是如何存储的，有什么特点？
 
-   62. 与传统的消息系统相比，kafka的消费模型有什么优点？
+   63. 与传统的消息系统相比，kafka的消费模型有什么优点？
 
-   63. kafka如何实现分布式的数据存储与数据读取？
+   64. kafka如何实现分布式的数据存储与数据读取？
 
-   64. 索引
+   65. 索引
 
        1. 什么是稀疏索引？和密集索引的关系以及区别
 
@@ -1363,7 +1378,7 @@
           2. 位移索引
           3. 事务索引
 
-   65. 源码？
+   66. 源码？
 
 8. mysql
 
@@ -1600,14 +1615,14 @@
    16. 事务
    
         1. acid？
-   
+          
           1. atomic（原子性）：一个事务里的sql要么都执行，要么都不执行
        2. c（一致性）：
           3. i（隔离性）
           4. d（持久性）：事务提交了之后
 
        2. mvcc？
-      
+         
           > rr下的mvcc：
        >
           > rc下的mvcc：每次select都会生成一个readView
@@ -1648,7 +1663,7 @@
 
           1. mysql5.6之后支持多线程重放
 
-            27. 对于实时性要求高的数据，读主库
+                 27. 对于实时性要求高的数据，读主库
    
    28. 一个6亿的表a，一个3亿的表b，通过外间tid关联，你如何最快的查询出满足条件的第50000到第50200中的这200条数据记录
    
