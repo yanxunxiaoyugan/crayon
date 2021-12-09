@@ -12,7 +12,7 @@ public class SortArray {
     public int[] sortArray(int[] nums) {
         if(nums == null || nums.length == 1){
             return nums;
-        }
+        } 
         quickSort(nums,0,nums.length - 1);
         return nums;
     }

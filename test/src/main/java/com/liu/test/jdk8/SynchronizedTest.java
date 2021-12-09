@@ -21,6 +21,8 @@ public class SynchronizedTest {
                 }
             }
         }
+
+        System.out.println("main1:"+ClassLayout.parseInstance(a).toPrintable());
         Runnable target;
 //        new Thread(() ->{
 //            try {
