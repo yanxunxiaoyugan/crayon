@@ -50,7 +50,6 @@ public class Test {
 
     }
 
-
     static class Dictory{
         String key;
         Object value;
