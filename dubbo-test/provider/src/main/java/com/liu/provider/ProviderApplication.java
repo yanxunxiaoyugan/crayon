@@ -29,6 +29,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class ProviderApplication {
     public static void main(String[] args) {
+        String[] a = new String[2];
+        Object[] b = a;
+        a[0] = "hi";
+        b[1] = 42;
+
         SpringApplication.run(ProviderApplication.class, args);
     }
 }

@@ -31,8 +31,9 @@
          9. nginx实现了互斥锁解决epoll在fork之后的惊群效应
             1. 当有新的连接事件时，所有的进程都会被唤醒去执行accept，但只有一个进程能抢到锁，才能执行accept，其他没抢到锁的进程重新进入睡眠状态。锁只能保证只有一个进程去调用accept函数，解决了很多进程调用accept返回错误。
       6. netty？
-      7. 零拷贝？
+      7. 零拷贝？（零拷贝需要结合linux网络一起回答，参见《深入理解Linux网络》）
          1. mmap
+	         1. 用户空间的虚拟地址 和内核空间的虚拟地址映射到了同一块物理地址上，应用程序可读不可写
          2. sendfile
       8. tomcat的nio
       9. nio空轮训bug？netty怎么解决？
@@ -880,7 +881,7 @@
 
       > 在spring context中只定义了singleton和prototype两个scope
       >
-      > 在spring web中新增了request ,session, global session, websocket等scope
+      > 在spring web中新增了request session等scope
 
    6. 实例化bean的方式
 
@@ -906,55 +907,27 @@
 
    9. beanFactory和applicationContext的区别？
 
-      1. beanFactory是spring  bean的顶级接口，提供了一个管理bean的高级抽象（主要是getBean，作用域，生命周期管理）， ApplicationContext是BeanFactory的一个实现类，并且扩展了许多功能， 比如aop，事件发布
-      2. 和普通的BeanFactory相比，ApplicationContext能够检测特殊的bean（BeanFactoryPostProcessor，BeanPostProcessor，ApplicationListener）。beanFactory不区分这些bean，但是ApplicationContext需要把它们区分出来并区别对待
-      3. 示例图：![image-20211115163727511](image-20211115163727511.png)
+      1. 示例图：![image-20211115163727511](image-20211115163727511.png)
 
-   10. GenericApplicationContext
-
-       1. 不支持refresh的applicationContext，因为ApplicationContext内部是使用DefaultListableBeanFactory，这个不允许重复创建
-
-   11. FactoryBean：
-
-       1. 用来创建bean
-
-   12. 创建bean的方式
-
-       1. 注解（@Component 或@Bean+ @ComponentScan）
-       2. xml
-       3. factoryBean
-
-   13. Bean的生命周期有几种控制方式？有什么区别？
+   10. Bean的生命周期有几种控制方式？有什么区别？
 
        1. beanPostProcessor（@PostConstruct）
        2. InitiaingBean
        3. init-method
 
-   14. HierarchicalBeanFactory：可继承的beanFactory
+   11. 单例bean和原型bean有什么区别？
 
-       1. 当从applicationContext获取bean是，applicationContext会先从当前容器寻找如果找不到，尝试从父容器中获取，spring scope的singleton是针对容器而言的。在SSM项目中会有两个容器， web的容器是原始容器的子容器，所以SSM项目中@Controller可以注入@Service，而@Service不能注入@Controller的bean。 而在springboot中只有一个容器
-
-   15. ListableBeanFactory：
-
-       1. 获取bean时只从当前容器寻找，不会找父容器。如果寻找时想包含父容器，使用BeanFactoryUtils中的方法
-       2. DefaultListableBeanFactory的**getBeanNamesForType**方法只在当前容器寻找，**getBean**会从父容器寻找
-
-   16. 单例bean和原型bean有什么区别？
-
-       1. 单例bean只有一个，它的生命周期完全由spring管理
-       2. 原型bean每次获取都是新的，spring创建完之后就失去了对它的管理
-
-   17. spring的environment？
+   12. spring的environment？
 
        1. environment是spring内置的一种环境抽象，主要是用来描述applicationContext的运行时的一些配置信息和构件信息，比如properties以及profiles。通过${}占位符可以获取properties的属性信息，profile可以用来指定构件，构件可以理解为一组配置信息
 
-   18. @Async的循环依赖
+   13. @Async的循环依赖
 
-   19. spring aop实现原理
+   14. spring aop实现原理
 
        > 就是把目标对象进行代理，然后暴露出方法的生命周期（执行之前、执行之后、异常、整合起来的环绕），然后对方法的生命周期地方对方法进行增强
 
-   20. 静态代理和动态代理的区别？
+   15. 静态代理和动态代理的区别？
 
        1. 静态代理：
 
@@ -967,9 +940,9 @@
 
           1. 概念：在运行时，通过字节码技术动态生成代理类（java有成熟的方案给我们用：jdk动态代理和cglib动态代理）
 
-   21. jdk动态代理和cglib动态代理的区别？
+   16. jdk动态代理和cglib动态代理的区别？
 
-      22. jdk动态代理：Proxy.newProxyInstance(classLoader,interface[],invocationHandler)
+      17. jdk动态代理：Proxy.newProxyInstance(classLoader,interface[],invocationHandler)
 
           > 1. 被jdk代理的对象必须实现接口
           >
@@ -983,27 +956,27 @@
           >
           > JDK动态代理是面向接口的代理模式，如果被代理目标没有接口那么Spring也无能为力。
 
-      23. cglib动态代理
+      18. cglib动态代理
 
           > 1. Spring在运行期间通过 CGlib继承要被动态代理的类，重写父类的方法被cglib代理的.
           > 2. 对象的方法不能是final，因为cglib是通过继承的方式来增强的
 
-   24. jdk的动态代理为什么不能代理类？
+   19. jdk的动态代理为什么不能代理类？
 
        1. 简单点来说就是生成的代理类extends Proxy。而java是单继承的，所以如果被代理类继承了别的类是没办法再去继承Proxy
        2. 源码分析：
 
-   25. spring 默认 用什么代理？
+   20. spring 默认 用什么代理？
 
        > spring framework默认使用jdk动态代理
        >
        > 但是spring boot默认使用cglib动态代理
 
-   26. this调用导致aop失效（即this调用没有走代理类）
+   21. this调用导致aop失效（即this调用没有走代理类）
 
        1. 
 
-   27. beanFactory和applicationContext那个才是ioc容器？
+   22. beanFactory和applicationContext那个才是ioc容器？
 
       > beanFactory: 定义了ioc容器最基础的功能
       >
@@ -1013,7 +986,7 @@
 
        1. singletonObjects：一级缓存
        2. earlySingletonObjects：二级缓存
-       3. singletonFactories：三级缓存：put的时候放初始bean，get的时候会判断是否需要aop，如果需要aop就返回代理对象，如果不需要还是会返回原对象
+       3. singletonFactories：三级缓存
        4. singletonsCurrentlyInCreation：存放正在创建的bean，创建完bean后会移出去
        5. Set<String> alreadyCreated：至少被创建了一个bean，都会放进来
 

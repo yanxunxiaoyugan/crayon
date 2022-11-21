@@ -25,4 +25,14 @@
    4. 一个Channel在它的生命周期内只会被一个EventLoop处理
    5. EventLoop可能会处理多个Channel
 
+3. 问题
+
+   1. netty如何支持主从reactor模式
+   2. 为什么说netty的main reactor大多不能用到一个线程组
+   3. netty给channel分配NIO eventLoop的规则
+   4. 为什么需要应用层keepalive
+      1. 协议分层，传输层关注的是连接是否可用，应用层关注的是服务是否可用
+      2. tcp的keepalive默认关闭，经过中转设备的keepalive包可能被丢弃
+      3. keepalive太长，属于系统参数，修改会影响所有应用
+
    

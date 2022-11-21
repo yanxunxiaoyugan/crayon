@@ -1,0 +1,144 @@
+{
+  "main": {
+    "id": "c9290aef5fe6d333",
+    "type": "split",
+    "children": [
+      {
+        "id": "9762d6041dd5ba5d",
+        "type": "leaf",
+        "state": {
+          "type": "markdown",
+          "state": {
+            "file": "interview/读书笔记/这就是搜索引擎/note.md",
+            "mode": "source",
+            "source": false
+          }
+        }
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "54296f5b2555cac9",
+    "type": "split",
+    "children": [
+      {
+        "id": "7a0b886267aff707",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "24830b8a3823e276",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {}
+            }
+          },
+          {
+            "id": "cc09fe952e963a52",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              }
+            }
+          },
+          {
+            "id": "e783f5e6c5e0925c",
+            "type": "leaf",
+            "state": {
+              "type": "starred",
+              "state": {}
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 345.5
+  },
+  "right": {
+    "id": "c37ca0ec36169520",
+    "type": "split",
+    "children": [
+      {
+        "id": "913b1c8a1a8fad47",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "4e4ce3d368e61caf",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "interview/读书笔记/这就是搜索引擎/note.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "592d3c49f0b4458b",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "interview/读书笔记/这就是搜索引擎/note.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              }
+            }
+          },
+          {
+            "id": "e763877e35424ec5",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              }
+            }
+          },
+          {
+            "id": "de3dc965dc97ba91",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "interview/读书笔记/这就是搜索引擎/note.md"
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "active": "9762d6041dd5ba5d",
+  "lastOpenFiles": [
+    "interview/读书笔记/这就是搜索引擎/note.md",
+    "interview/读书笔记/手把手教你读财报/note.md",
+    "interview/读书笔记/手把手教你读财报/Pasted image 20220821130055.png",
+    "interview/读书笔记/手把手教你读财报/Pasted image 20220821130941.png",
+    "interview/读书笔记/手把手教你读财报/Pasted image 20220821131213.png",
+    "interview/手写系列/手写raft.md",
+    "interview/手写系列/手写LSM.md",
+    "interview/aproblem.md",
+    "interview/源码/kafka.md",
+    "interview/手写系列/手写B+树.md"
+  ]
+}
