@@ -1,5 +1,6 @@
 package com.liu.agent.study.demo1;
 
+import java.lang.reflect.Constructor;
 import java.net.URL;
 import java.net.URLClassLoader;
 
@@ -12,7 +13,7 @@ public class MyClassLoader  extends URLClassLoader {
     @Override
     public Class<?> loadClass(String name) throws ClassNotFoundException {
         Class<?> aClass = findClass("cn.bintools.cloudquery.module.mariadb.execute.MariaDbRoutineExecuteFactory");
-        System.out.println(aClass);
+//        aClass.newInstance();
         return super.loadClass(name);
     }
 }

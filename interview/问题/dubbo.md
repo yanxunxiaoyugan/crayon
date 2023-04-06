@@ -21,20 +21,31 @@
         9. Transport：网络传输层，封装了netty和mina
         10. serialize：序列化和反序列化
   3. dubbo的服务暴露过程
-     1. Proxy根据协议将暴露出去的接口封装成Invoker，再使用Exporter包装有一下，register把exporter注册到注册中心
-     2. 实例图：![image-20211110172334446](../image-20211110172334446.png)
-  4. dubbo消费过程？
+     1. 在dubbo-config-spring中使用了spring的两个扩展点：spring.handlers,spring.schemas.会把扫描到的注册文件注册成beanDefinition
+     2. 每个类会生成两个beanDefinition（一个是原生bean，一个是这个bean对应的ServiceBean）
+     3. 在ServiceBean中有个export（）方法，这个方法执行具体的服务暴露流程
+     4. Proxy根据协议将暴露出去的接口封装成Invoker，再使用Exporter包装有一下，register把exporter注册到注册中心
+     5. 实例图：![image-20211110172334446](../image-20211110172334446.png)
+    4. dubbo的延迟暴露？
+       1. dubbo的serverbean中有两个spring扩展点
+            1. afterPropertiesSet: 在bean初始化的时候执行
+            2. onApplicationEvent：在spring初始化完成之后执行
+            3. 这两个方法只会执行一次export方法
+       2. 如果服务配置了delay参数，会在afterPropertiesSet方法把export方法加入到延时任务
+       3. 如果没配置会在onApplicationEvent方法里立即执行
+       4. 延迟暴露主要是多协议暴露服务时（比如rest），有可能执行了export之后，但是tomcat还不能接受请求，导致consumer报错。如果是使用平时SpringBoot，并不回出现这个问题，因为tomcat会在export之前完全启动
+    5. dubbo消费过程？
      1. 调用invoke之后，先从Cluster获取所有可调用的Invoker列表，如果配置了规则，那就过滤一遍Inovker列表
      2. 剩下的Invoker列表再LoadBalance选一个，然后经过filter做一些统计，然后通过CLient做数据传输
      3. Codec做协议构造，然后序列化。发情请求
      4. 服务提供者接受到请求之后进行Coder进行协议处理，，然后反序列化，把请求放到线程池中
      5. 某个线程池中的线程根据请求找到Exporter，然后找到Invoker
      6. ![image-20211110172512918](../image-20211110172512918.png)
-  5. dubbo怎么实现熔断？
-  6. spi机制？
-  7. 怎么实现限流？
-  8. 序列化实现原理？
-  9. dubbo怎么支持事务？
-  10. dubbo的负载均衡？
-  11. 注册中心挂了后，dubbo还能进行服务调用吗
-      1. dubbo会把再内存中保存一份，还会持久化到磁盘
+    6. dubbo怎么实现熔断？
+    7. spi机制？
+    8. 怎么实现限流？
+    9. 序列化实现原理？
+    10. dubbo怎么支持事务？
+    11. dubbo的负载均衡？
+    12. 注册中心挂了后，dubbo还能进行服务调用吗
+        1. dubbo会把再内存中保存一份，还会持久化到磁盘

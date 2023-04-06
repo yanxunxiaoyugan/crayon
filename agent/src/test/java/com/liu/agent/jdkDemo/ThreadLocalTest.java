@@ -1,6 +1,6 @@
 package com.liu.agent.jdkDemo;
 
-import sun.misc.Unsafe;
+//import sun.misc.Unsafe;
 
 import java.lang.ref.WeakReference;
 import java.net.URL;
@@ -15,9 +15,9 @@ public class ThreadLocalTest {
             System.out.println(url);
         }
         System.out.println("=======================================================================================");
-        System.out.println(Unsafe.class.getClassLoader());
+//        System.out.println(Unsafe.class.getClassLoader());
         System.out.println(Thread.currentThread().getContextClassLoader());
-        Thread.currentThread().setContextClassLoader(Unsafe.class.getClassLoader());
+//        Thread.currentThread().setContextClassLoader(Unsafe.class.getClassLoader());
         HashMapDemo hashMapDemo = new HashMapDemo();
         WeakReference<HashMapDemo> test = new WeakReference<>(hashMapDemo);
 
