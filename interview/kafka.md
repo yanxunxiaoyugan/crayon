@@ -54,7 +54,7 @@
       >
       > Headers headers
       >
-      > K key
+      > K key （相同key会被发送到相同分区， 有key的消息可以支持日志压缩）
       >
       > V value (value一般不为空，，为空就是墓碑消息)
       >
@@ -116,6 +116,32 @@
       > * min.insync.replicas =2 控制某消息至少写入到多少个isr才算成功，只有ack=all这个参数才有效
       > * replication.factor > min.insync.replicas
       > * enable.auto.commit = false 取消自动提交
+
+   7. 发消息的三种模式
+
+      1. 发送即忘（fire-and-forget）: 发完就不管 有可能没有发送成功
+      2. 同步：直接调用send方法 一条一条发送， 速度太慢
+      3. 异步：在send方法添加callback函数
+
+   8. 异常： 可重试异常（网络，leader不可用），不可重试异常（消息太大）
+
+   9. 分区器：如果record没有指定partition字段， 就会根据key分区。 
+
+      1. 如果key为null：计算的分区为可用分区中的任意一个
+      2. 如果key不为null： 计算的分区号是所有分区的任意一个
+      3. 在不改变topic分区数量的情况下， key和分区之间的映射可以保持不变。 一旦增加了分区，就不能保证这种映射关系了
+
+   10. 拦截器：在消息序列化和计算分区之前会调用生产者拦截器。
+
+   11. KafkaProducer 会在消息被应答（ cknowledgement ）之前或消息发送失败时调用生产者拦
+
+       截器的 onAcknowledgement（） 方法，优先于用户设定的 Callback 之前执行。这个方法运行在
+
+       Producer I/ O线程中，所以这个方法中实现的代码逻辑越简单越好 则会影响消息的发送
+
+       速度。可以配置多个拦截器，拦截器会按照配置的顺序一一执行。 在拦截链中，如果某个拦截器执行失败，那么下 个拦截器会接着从上一个执行成功截器继续执行
+
+   12. kafkaProducer是线程安全的
 
 8. kafka 的consumer
 
