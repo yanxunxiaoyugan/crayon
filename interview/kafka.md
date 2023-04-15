@@ -246,11 +246,25 @@
              3. v2：0.11.0之后的日志格式 ![image-20211011141054433](image-20211011141054433.png)
              4. v2版本的日志格式提供了事务、幂等等特性
     6. 日志索引
-       1. 偏移量索引
-       2. 时间戳索引：找到的索引要去偏移量索引重新找一次，，然后才能确定具体的位置
-       3. 日志删除
-       4. 日志压缩
-    7. 页缓存、零拷贝（mmap和sendfile（sendfile的数据对应用不可见））
+       1. 偏移量索引：relativeOffset（logSegment内的偏移量）  postitoin![image-20230415120534820](image-20230415120534820.png)
+       2.  最外层会有ConcurrentSkipListMap的跳表保存各个logSegment的baseOffest
+       3. 时间戳索引：timestamp（最大时间戳） relativeOffset（根据这个字段回表）
+          1. 找到的索引要去偏移量索引重新找一次，，然后才能确定具体的位置， 类似于innodb的回表
+          2. 时间戳分为两种：创建时间和logAppendTime，logAppendTime是递增的，但是createTime不是， 生产者自己指定时间戳也无法保证递增
+          3. 查找流程：![image-20230415121751871](image-20230415121751871.png)![image-20230415121810095](image-20230415121810095.png)
+          4. 以上
+       4. 日志清理策略
+          1. 日志删除
+             1. 基于时间的保留策略：
+                1. log retention ms优先级最高，时间戳选择是的logsegment的最大时间戳：largestTimeStamp（要获取日志分段中的最大时间 largestTimeStamp 的值 首先要查询该日志分段所对应的时间戳索引文件，查找时间戳索引文 中最后一条索引项，若最后 条索引项的时间戳字段值大于 ，则取其值才设置为最近修改时间 lastModifiedTime）
+                2. 如果所有的logsegment都要被删除，由于分区必须要有一个activeSegment，所以会新建一个空的logsegment作为activeSegment
+             2. 基于日志大小的保留策略： 计算partition的大小， 删除多于的logSegment
+             3. 基于日志起始偏移量的保留策略
+          2. 日志压缩：针对每个消息的key进行整合， 只保留相同key的最后一个版本
+       5. 磁盘存储
+          1. 顺序IO
+          2. 页缓存、
+          3. 零拷贝（mmap和sendfile（sendfile的数据对应用不可见））
 
 11. Broker端
 
@@ -274,7 +288,7 @@
        4. controller处理事件图： ![image-20211011194527269](image-20211011194527269.png)
     6. 使用kill - s TERM PIDS 或者 kill 15 PIDS 的方式来关闭进程
     7. 分区leader的选举
-       1. 创建分区或分区上线（原先的leader下线）的选举策略：OftlinePartitionLeaderElectionStrategy，从AR列表中找出第一个存活的follower，并且这个follower在ISR中
+       1. 创建分区或分区上线（原先的leader下线）的选举策略：OfflinePartitionLeaderElectionStrategy，从AR列表中找出第一个存活的follower，并且这个follower在ISR中， 注意这里是根据AR的顺序而不是ISR的顺序
        2. 分区进行手动重分配也会执行leader的选举，策略为ReassignPartitionLeaderElectionStrategy，从重分配的AR列表中找出第一个存活的follower，并且这个follower在ISR中
        3. 发生优先副本的选举时，直接将优先副本设置为leader，AR集合中的第一个副本就是优先副本
        4. 某节点被优雅关闭时，ControlledShutdownPartitionLeaderElectionStrategy，从AR集合中找到一个存活的follower，并且这个副本在ISR中，同时确保这个follower不处于正在关闭的节点上
@@ -282,8 +296,8 @@
 
 12. 客户端
 
-    1. 分区策略
-       1. RangeAssignor（默认）：先把消费者组内订阅某topic的消费者按字典序排序，然后按照消费者总数和分区总数进行整除。如果不够平均分配，那么字典序靠前的消费者会多分配一个分区。如果这样的topic存在多个，那么字典序靠前的消费者压力较大
+    1. 消费者分区策略：客户端参数partition.assignment.strategy
+       1. RangeAssignor（默认）：先把消费者组内订阅某topic的消费者按字典序排序，然后按照消费者总数和分区总数进行整除。由于每个topic都是这么分配的，所以如果topic的分区不够消费者平均分配，那么字典序靠前的消费者会多分配一个分区。如果这样的topic存在多个，那么字典序靠前的消费者压力较大
 
        2. RoundRobinAssignor：将消费者组内所有消费者即消费者订阅的所有主题按照字典序排序，然后轮训将分区依次分配给每个消费者。如果组内的消费者订阅的topic是不相同的，那么会有问题：![image-20211012095324228](image-20211012095324228.png)
 
@@ -298,25 +312,37 @@
 
     2. 消费者协调器和组协调器
 
-       1. 每个消费者组的子集在服务端有一个GroupCoordinator对其进行管理，而消费者的ConsumerCoordinator负责与GroupCoordinator进行交互
-       2. 发生Rebalance的原因：
+       1. 疑问？
+          1. 如果消费者客户端配置了多个分配策略， 那么以哪个为准
+          2. 如果有多个消费者。多个消费配置的分配策略也不同， 以哪个为准
+          3. 多个消费者是需要协同的， 协同的过程是怎样的
+       2. 每个消费者组的子集在服务端有一个GroupCoordinator对其进行管理，而消费者客户端的ConsumerCoordinator负责与GroupCoordinator进行交互， 主要负责执行消费者rebalance，分区的分配就是在rebalance期间完成
+          1. ![image-20230415220340017](image-20230415220340017.png)
+          2. 发在rebalacne时， 一个消费者组下的所有消费者会同时进行rebalance， 而消费者之间并不知道彼此的操作， 如果依赖zk，会有羊群效应
+       3. 发生Rebalance的原因：
           1. 新的消费者加入消费者组
           2. 消费者宕机（长时间GC，网络延迟导致未收到心跳）
           3. 有消费者主动退出消费者组
           4. 消费者组对应的GroupCordinator节点发生变更
           5. 组内任一topic或topic的partition数量 发生了变化
-       3. a
-       4. 选举消费者组的leader： 第一个加入消费者组的消费者就是leader，如果leader下线，HashMap中第一个就是leader
-       5. 选举分区分配策略
-          1. 收集各个消费者支持的所有分配策略，组成候选集candidates
-          2. 每个消费者从candidate中找出自身支持的第一个策略，为这个策略投票
-          3. 选票最多的就是当前消费者组分配策略
+       4. 当有消费者加入消费者组的阶段
+          1. 第一阶段： FIND_COORDINATOR
+             1. 消费者需要确定它所属的组对应的GroupCoordinator所在的broker， 并创建与该broker互相通信的网络连接。如果之前已经保存了对应的broker信息，需要确认网络连接是否正常。如果连接不正常，需要向集群中某个节点（负载最小的节点）发送findCoordinatorRequest请求。
+             2. kafka收到findCoordinatorRequest请求之后，根据groupId的hashcode对groupMetadataTopicPartitionCount（topic __ consumer_offset的分区个数）取余。 这样就能找到某个__consumer_offset的分区
+             3. 根据分区编号查找该分区的leader所在的broker节点， 该节点就是该消费者组group的GroupCoordinator. 该消费者组的分区分配方案以及组内消费者所提交的消费位移信息都会发送给此分区leader所在的broker节点， 让次broker节点既扮演GroupCoordinator又扮演分区分配方案和组内消费者位移的角色，可以省去很多不必要的中间环节所带来的开销
+          2. 第二阶段：JOIN_GROUP, 成功找到消费者所对应的GroupCoordinator之后，消费者会向GrouPCoordinator发送JoinGroupRequest
+             1. 消费者发送JoinGroupRequest之后会一直阻塞直到服务端响应
+             2. 选举消费者组的leader： 第一个加入消费者组的消费者就是leader，如果leader下线，HashMap中第一个就是leader
+             3. 选举分区分配策略：每个消费者都可以设置自己的分区分配策略，根据投票决定
+                1. 收集各个消费者支持的所有分配策略，组成候选集candidates
+                2. 每个消费者从candidate中找出自身支持的第一个策略，为这个策略投票
+                3. 选票最多的就是当前消费者组分配策略
+          3. 第三阶段：Sync_Group
+          4. 第四阶段：HEARTbeat
+       5. consumer_offset
+          1. 一般情况下，当集群中第一次消费者消费消息时，会自动创建这个topic
 
-    3. consumer_offset
-
-       1. 一般情况下，当集群中第一次消费者消费消息时，会自动创建这个topic
-
-    4. 事务
+    3. 事务
 
        1. kafka从0.11开始引入幂等和事务这两个特性，来实现exactly once semantics
           1. 幂等：生产者在进行重试的时候有可能会重复写入消息，利用幂等特性可以避免这种情况
