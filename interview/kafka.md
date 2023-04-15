@@ -145,20 +145,38 @@
 
 8. kafka 的consumer
 
-   1. kafka的consumer不是线程安全的，consumer会把每个partition的offset提交到__consumer_offset
+   1. kafka的consumer不是线程安全的，consumer会把每个partition的offset提交到__consumer_offset的topic中
 
-   2. consumerGroup的分区策略
+   2. consumer的订阅方式，只能使用一种订阅方式
 
-   3. kafkaConsumer.assign(List<TopicPartition> partition):可以订阅topic中的某个分区
+      1. subscribe(Collection): auto_topics
+      2. subscribe(auto_pattern): auto_pattern
+      3. assign(collection): 指定topic和分区， USER_ASSIGNED
+      4. subscribe()方法订阅具有消费者自动rebalance功能， 当消费组内的消费者增加或减少时， 消费者的分区分配关系会自动调整
 
-   4. rebalance
+   3. consumerGroup的分区策略
+
+   4. kafkaConsumer.assign(List<TopicPartition> partition):可以订阅topic中的某个分区
+
+   5. rebalance
 
       > 1. rebalance规定了一个consumer group下的consumer如何达成一致来分配订阅某个topic的所有分区
       > 2. 
 
-   5. consumer.subscribe(list<String> ) 方法不是增量，而是覆盖
+   6. consumer.subscribe(list<String> ) 方法不是增量，而是覆盖
 
-   6. consumer的参数
+   7. kafka默认的位移提交是自动提交， 参数为auto.commit.interval.ms 表示自动提交间隔， 默认为5s。 每隔5s会将每个分区的最大消息位移进行提交， 自动提交位移的操作是在poll方法里完成的， consumer每次向服务端拉取请求之前会先检查是否可以进行位移提交
+
+   8. 手动提交offset
+
+      1. 同步提交
+         1. 无参数的手动提交会根据poll方法拉取的最新位移进行提交
+         2. 有参数的offset参数是消息的offset+1
+      2. 异步提交: 不阻塞， 可以提高性能
+
+   9. seek（）： 指定消费的offset， 也可以指定时间参数
+
+   10. consumer的参数
 
       > * session.timeout.ms: consumer group检测组内成员发送崩溃的时间
       > * max.poll.interval.ms: consumer处理逻辑的最大时间。如果consusmer的逻辑处理时间超过了此值，coordinator会把该consumer踢出改组，然后对该组进行Rebalance
@@ -169,33 +187,33 @@
       > * heartbeat.interval.ms: 该值必须小于session.timeout.ms。每个consumer都会根据此值周期性的向group coordinator发送heartbeat，然后groupcoordinator给各个consumer响应。如果group coordinator给sonsumer的响应包好了 REBALANCE_IN_PROGRESS标识，各个consumer就知道已经发送了rebalance
       > * connection.max.idle.ms: kakfa会周期性的关闭空闲连接
 
-   7. kafka的consumer是有两个线程，一个是用户主线程，用来poll、rebalance，位移提交，异步任务结果的处理，，还有一个是心跳线程
+   11. kafka的consumer是有两个线程，一个是用户主线程，用来poll、rebalance，位移提交，异步任务结果的处理，，还有一个是心跳线程
 
-   8. consumer的位移
+   12. consumer的位移
 
-      1. 常见的交付语义
+       1. 常见的交付语义
 
-         > 1. at most once: 消息可能丢失，但不会重复处理
-         > 2. at least once：消息不会丢失，但是会重复消费
-         > 3. exactly once：消息不会丢失并且只会被消费一次
-         >
-         > 如果consumer在消费之前（poll消息之后）提交offset，consumer崩溃会导致消息丢失
-         >
-         > 如果consumer在消费之后提交offset，consumer崩溃来不及提交offset，会导致消息重复消费
-         
-      2. 使用commitAsync提交offset时，如果设置了retry也有可能造成重复消费。我们可以维护一个递增的序号来维护异步提交的顺序
+          > 1. at most once: 消息可能丢失，但不会重复处理
+          > 2. at least once：消息不会丢失，但是会重复消费
+          > 3. exactly once：消息不会丢失并且只会被消费一次
+          >
+          > 如果consumer在消费之前（poll消息之后）提交offset，consumer崩溃会导致消息丢失
+          >
+          > 如果consumer在消费之后提交offset，consumer崩溃来不及提交offset，会导致消息重复消费
+          
+       2. 使用commitAsync提交offset时，如果设置了retry也有可能造成重复消费。我们可以维护一个递增的序号来维护异步提交的顺序
 
-   9. consum控制或关闭消费
+   13. consum控制或关闭消费
 
-      1. kafka使用pause和resume来暂停和恢复
+       1. kafka使用pause和resume来暂停和恢复
 
-   10. rebalance触发条件
+   14. rebalance触发条件
 
           1. 组成员发送变化：加入新的consumer，consumer下线、崩溃
           2. 组订阅的topic数发生变化：比如使用正则订阅topic
           3. topic的分区数发生变化： topic增加的分区
 
-   11. 分区策略
+   15. 分区策略
 
           1. round-robin
           2. range
