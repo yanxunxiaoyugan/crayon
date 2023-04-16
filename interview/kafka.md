@@ -348,25 +348,45 @@
           1. 幂等：生产者在进行重试的时候有可能会重复写入消息，利用幂等特性可以避免这种情况
              1. 开启方式：生产者的参数enable.idempotence: true。除了这个参数，也要保证（retries（大于0），acks（-1），max.in.flight.request.per.conneciont(不能大于5)不配错）
              2. 为了实现幂等，kafka引入了producer id和sequence number。每个producer在初始化的时候都会分配一个pid，每条消息发送到每一个分区都一个sequence number，从0开始递增。生产者每发送一条消息就将<pid,partition>对于的sequence number加1。broker端在内存中为每一对<pid,partition>维护一个sequence number，只有当消息中的sequence  number= broker中的sequence number +1，broker才会接受这条消息。kafka的幂等只保证单个生产者幂等。
-          2. 事务：因为幂等只支持单分区，所有有了事务
+          2. 事务：因为幂等只支持单分区，所以有了事务。事务可以保证对多个分区的写入操作的原子性。kafka的事务可以使生产消息，消费消息，提交消费位移当做原子操作来处理
              1. 开启事务：生产者 transactional.id: {id},开启事务时候默认开启幂等。
-             2. transaction的id由用户显式设置。为了保证新的生产者启动之后具有相同的transactionid的旧生产者能立即失效，每个生产者获取pid的同时，还会获取一个单调递增的producer epoch。如果使用同一个transactionId启动两个生产者，先启动的生产者会报错
-             3. 缺点
+             2. transactionId和producerId一一对应，
+             3. transaction的id由用户显式设置。为了保证新的生产者启动之后具有相同的transactionid的旧生产者能立即失效，每个生产者获取pid的同时，还会获取一个单调递增的producer epoch。如果使用同一个transactionId启动两个生产者，先启动的生产者会报错
+             4. 缺点
                 1. 对于采用日志压缩策略的主体而言，事务中的某些消息有可能被清理（消息具有相同的key）
                 2. 事务中的消息可能分布在多个logSegment，当老的logSegment被删除时，消息可能丢失
                 3. 消费者通过seek消费消息时，可能会遗漏事务中的某些消息
                 4. 消费者在消费时，没有被分配到事务内的分区
+             5. 消费者有一个参数：isolation.level， 默认值为read_uncommitted，还可以设置为read_committed. read_committed表示只有commit的消息才能被消费者看到
+             6. 为了实现事务功能，kafka引入了TransactionCoordinator, TransactionCoordinator会将事务的状态持久化到__transaction_state中
+             7. 实例：![image-20230416124856821](image-20230416124856821.png)
+                1. 查找TransactionCoordinator， 和查找GroupCoordinator差不多，公式为transactionId.hashcode() %(_——transaction_state)， 分区的leader就是TransactionCoordinator
+                2. 找到TransactionCoordinator之后，给当前生产者分配一个PID。开启幂等或者开启事务都需要这个操作。 
+                3. 保存pid到__transaction_state中，幂等时这个请求可以发送到任意broker。保存后会增加该PID的producer_epoch,具有相同PID但是 小于该producer_epoch的其他生产者新开启的事务会被拒绝
+                4. 开启事务，生产者调用beginTransaction时认为开启了新事务，只有生产者发送了第一条消息后TransactionCoordinator才认为开启了新事务
+                5. Consume_Transform_Produce
+                   1. addPartitionsToTxnRequest: 当生产者给一个新的分区发送数据前，需要先给TransactionCoordinator发送addPartitionsToTxnRequest请求， 让TransactionCoordinator把\<transcationId, TopicPartition\>的关系存储在transaction_state中![image-20230416135837803](image-20230416135837803.png)
+                   2. 
 
 13. 可靠性
 
-    1. 副本
-       1. 失效副本
+    1. 问题？
+       1. kafka的多副本之间如何进行数据同步， 发生异常时的处理机制是什么？
+       2. 多副本间的数据一致性怎么解决？ 基于的一致性协议又是什么？
+       3. 如何确保kafka的可靠性？
+       4. kafka的可靠性和可用性之间的关系？
+
+    2. 副本
+       1. 失效副本： OSR,OSR的副本处于同步失效或者功能失效的状态。副本滞后leader的时间超过数 replica lag time max ms判定为同步失效， 会把该副本踢出ISR，加入OSR。 根据落后offset的判定方式过时了， 因为此种方式设置太大没有意义，太小会导致ISR频繁伸缩， 而且是全局的，对所有的topic生效，对流入速度不同的topic会有不同的影响。
        2. ISR
+          1. 伸缩：
+             1. 缩小： 两个定时任务判断repl ca lag time.max ms是否超时
+             2. 增加： 当follower追上leader的HW时，添加到ISR中
        3. LEO、HW
        4. leader Epoch
        5. 读写分离
-    2. 日志同步机制
-    3. 可靠性分析
+    3. 日志同步机制
+    4. 可靠性分析
 
 14. 监控
 
@@ -377,6 +397,7 @@
 15. 高级应用
 
     1. TTL
+       1. 生产者在header中添加TTL，消费者添加拦截器判断
     2. 延时队列
     3. 死信队列和重试队列
     4. 消息路由
