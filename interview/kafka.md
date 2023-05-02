@@ -405,6 +405,10 @@
     6. 消息审计
     7. 消息代理
 
+16. kafka consumer设置lastest， 当新增partition时，producer比consumner先感知到新partition，此时发生丢失数据？怎么解决？
+
+16. 在new KafkaProducer（）时会创建并启动sender线程，sender线程会创建与broker的连接
+
 16. kafka的源码分析
 
    17. RDB：

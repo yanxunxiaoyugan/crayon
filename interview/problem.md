@@ -268,14 +268,16 @@
    > 4. 本地方法栈中引用的对象
    > 5. 被同步锁（synchronized）持有的对象
    > 6. jvm自身只有的对象，比如系统类加载器，基本数据类型对应的class对象
-   > 7. 对于YGC，老年代对新生代的引用也可以作为GC ROOT
+   > 7. 对于YGC，老年代对新生代的引用也可以作为GC ROOT。其实是非回收区域对回收区域的引用都可以是GC ROOT
 
 7. 4中引用？
 
    > 1. 强引用：一般就是new出来的对象
    > 2. 软引用（对应SoftRefenerce）：只要内存足够，就不会被回收。软引用可以配合ReferenceQueue一起使用（在创建软引用的时候在构造方法传入一个ReferenceQueue），当软引用已经被回收时，会把该对象加入ReferenceQueue，调用ReferenceQueue.poll()可以知道哪些软引用会被回收。用来做缓存
    > 3. 弱引用（对应WeekRefenerce）：下次垃圾回收就会回收。也可以配合ReferenceQueue一起使用
-   > 4. 虚引用（对应platformRefenerce）：一定要配合ReferenceQueue一起使用。jdk8的platformRefenerce不会对gc产生影响。
+   > 4. 虚引用（对应phantomRefenerce）：一定要配合ReferenceQueue一起使用。jdk8的platformRefenerce不会对gc产生影响。java8之前虚引用回收了对象才回收。虚引用可以识别出对象什么时候从内存中删除，还可以保证对象一定被回收了，不会出现复活现象
+   > 4. 链接： https://blog.csdn.net/m0_73330311/article/details/126473266
+   > 4. ![img](https://img-blog.csdnimg.cn/c11dcd93d4e44ac49f78a9185c760319.png)
    > 5. FinalReference:  如果某个对象实现了非空的Finalize()方法，那么会在编译时候生成一个Finalizer。所有的此类对象形成一个Finalizer链条。在gc的时候会取出对象执行finalize方法，并把该Finalizer从链条中删除，所以finalize方法只会执行一次（单独的线程执行）。
 
 8. PhantomReference和finalizer：
@@ -303,7 +305,7 @@
 
 13. 垃圾回收算法？
 
-    > 1. 标记清楚：
+    > 1. 标记清除：
     > 2. 复制算法：
     > 3. 标记整理算法：
 
@@ -319,9 +321,20 @@
 15. 对象怎么进入老年代？
 
     > 1. 大对象直接进入老年代
+    >
     > 2. 长期存活的对象进入老年代
-    > 3. 动态年龄判断：如果survivor区中相同年龄的对象大于survivor空间的一般，那么大于该年龄的对象进入老年代
-    > 4. 空间担保：每次进行GC时，jvm会计算survivor区移到老年代对象的平均大小，如果这个值大于老年代的剩余空间则进行一次full GC
+    >
+    > 3. 动态年龄判断：如果survivor区中相同年龄的对象大于survivor空间的一半，那么大于该年龄的对象进入老年代
+    >
+    > 4. 空间担保：在发生Minor GC之前，虚拟机会检查老年代最大可用的连续空间是否大于新生代所有对象的总空间。
+    >
+    >    如果大于，则此次Minor GC是安全的
+    >    如果小于，则虚拟机会查看-X:HandlePromotionFailure设置值是否允许担保失败。
+    >    —— 如果HandlePromotionFailure=true,那么会继续检查老年代最大可用连续空间是否大于历次晋升到老年代的对象的平均大小。
+    >    ————> 如果大于，则尝试进行一次Minor GC,但这次Minor GC依然是有风险的：
+    >    ————> 如果小于，则改为进行一次Full GC。
+    >    —— 如果HandlePromotionFailure=false,则改为进行一次Full GC。
+    >    ————————————————：https://blog.csdn.net/qq_49619863/article/details/127837482
 
 16. 垃圾回收器？
 
@@ -1037,12 +1050,27 @@
     12. 三级缓存怎么实现？怎么解决循环依赖
 
         1. 示例图：![image-20211104125223448](image-20211104125223448.png)
+    
         2. 示例图2：![img](17395320ad095cfb~tplv-t2oaga2asx-watermark.awebp)
-
+    
+        3. 实例： ServiceA 和ServiceB循环依赖
+    
+           1. 先创建ServiceA， 判断(mbd.isSingleton() && this.allowCircularReferences &&
+    
+              ​    isSingletonCurrentlyInCreation(beanName)) == true， 如果为true，把ServiceA放入三级缓存，并从二级缓存中移除。见org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#addSingletonFactory
+    
+           2. 放入三级缓存之后，填充属性，发现ServiceB， 一级，二级三级缓存中都没有，需要去创建ServiceB，同样的把serviceB放入三级缓存
+    
+           3. 把servcieB放入三级缓存之后，填充A，发现三级缓存中有serviceA，从三级缓存的工厂中取出serviceA，放入二级缓存，并且把serviceA的工厂从三级缓存中移除
+    
+           4. 创建完serviceB之后，由于是首次创建，所以会把ServiceB加入一级缓存，并在二级缓存和三级缓存中移除
+    
+           5. 继续填充ServiceA的属性，把return的serviceB对象填充到serviceA里面，然后把serviceA也放入三级缓存，并在二级缓存和三级缓存中移除
+    
     13. spring 和spring boot的关系
-
+    
         1. spring和spring mvc整合会有父子容器的概念，spring boot只有一个容器
-
+    
     14. spring aop的理解？基本概念？
 
         1. target：被代理的对象
@@ -1061,20 +1089,20 @@
             1. AOP 面向切面编程，全称 Aspect Oriented Programming ，它是 OOP 的补充。OOP 关注的核心是对象，AOP 的核心是切面（Aspect）。AOP 可以在不修改功能代码本身的前提下，使用运行时动态代理的技术对已有代码逻辑增强。AOP 可以实现组件化、可插拔式的功能扩展，通过简单配置即可将功能增强到指定的切入点。
 
     15. 多个切面怎么确定执行顺序？
-
+    
         1. 默认的切面执行顺序是根据切面类按照字母表的顺序来的
         2. 手动排序：实现Ordered接口的方法，返回值越小越先执行。默认是Intger.MAX_VALUE。
         3. 手动排序：使用@Order注解也可以指定order
-
+    
     16. spring aop实现原理？
-
+    
         1. 使用优先级最高的beanPostProcessor：AnnotationAwareAspectJAutoProxyCreator
         2. 在creatBean方法之后，doCreateBean方法之前会对bean进行一次增强
-
+    
     17. @Qualifier注解？
-
+    
     18. spring mvc流程？
-
+    
         > 1. dispatcherServlet:把请求交给handlerMapping
         >
         > 2. handlerMapping：handlerMapping的作用就是根据url去匹配handler（其实是HandlerMathod），找到了handler之后，把这次请求涉及到了的拦截器和handler一起封装起来，组成一个HanlerExecutionChain（链条），然后返回给dispatcherServlet
@@ -1092,9 +1120,9 @@
         >    > SpringMVC定义了两个接口来操作这两个过程：参数解析器HandlerMethodArgumentResolver和返回值处理器HandlerMethodReturnValueHandler
         >
         > 8. 总结：检查request类型-->获取匹配的Handlemethod-->查找拦截器-->组成HandlerExecutionChain执行链-->获取方法执行链对象的适配器（HandlerAdapter）-->然后反射执行业务方法
-
+    
     19. @RequestMapping实现原理？
-
+    
         1. 先解析请求的url，拿到path
         2. RequestMappingHandlerMapping有个属性mappingRegistry，mappingRegistry里面有个pathLookup（linkedMultiValueMap），里面存放了path->AbstractHandlerMethodMapping的映射
         3. 根据path找AbstractHandlerMethodMapping，找不到就报404，找到了就返回MethodHandler
@@ -1105,42 +1133,42 @@
         1. 在handlerAdapter交给controller处理完请求后，会对returnValue进行处理（调用handlerReturnValue方法），里面会找到MessageConvert，messageCOnvert对返回值进行处理
 
     21. spring boot自动装配原理？
-
+    
         1. SpringBootApplication注解：ComponentScan+EnableAutoConfiguration+SpringBootConfiguration（等价于Configuration）
         2. EnableConfiguration import 了AutoConfigurationImportSelector类
         3. AutoConfigurationImportSelector里面会使用SpringFactoriesLoader.loadFactoryNames，加载spring.factories文件的内容，把里面的类放到ioc容器
         4. 之后ioc解析beanDefinition的时候，在spring.factories的配置类就生效了
-
+    
     22. spring boot怎么实现热部署？
 
         1. devtools：
 
            > 1. devtools会监听classpath下的文件变动（通过ClassPathChangeEvent事件），发生了变动就会stop引用，gc，清楚对象引用，重新加载新文件
-
+    
         2. 原理：
 
            > 1. 使用了两个classLoader，一个classLoader加载那些不会变的类（第三方的jar包），另一个classLoader加载会更改的类称为：restart classLoader。
            > 2. 在代码有更改的时候，原来的reset ClassLoader被丢弃，重新创建一个restart classLoader来重启应用
-
+    
     23. spring 事务实现方式？
 
         1. 编程式事务
         2. 声明式事务 
            1. 使用@Transactional注解
-
+    
     24. 事务传播级别？？
-
+    
         1. Requierd
         2. new
         3. nested：savepoint机制
-
+    
     25. spring用了哪些设计模式
-
+    
         1. 单例：spring的bean默认就是单例的
         2. 工厂模式：使用工厂模式创建bean
-
+    
     26. 
-
+    
     27. 源码？
         1. spring session源码
            1. MapSession.getId(): 产生一个UUID作为session
@@ -1282,63 +1310,71 @@
     
         1. 优先副本就是AR集合中的第一个副本，理想情况下，优先副本就是该分区的leader
     
-    30. kafka有哪几处地方有分区分配的概念？简述大致过程和原理
+    30. kafka会启动两个定时任务
+    
+        1. 定期检查是否需要扩大或者缩减ISR集合，周期是replica.lag.time.max.ms的一半，也就是5s，当检测到ISR有失效副本时就收缩，如果OSR的LEO追上了hw，就加回来
+        
+    31. rebalacne过程
+    
+        1. 
+    
+    32. kafka有哪几处地方有分区分配的概念？简述大致过程和原理
     
         1. 消息生产者的消息分配需要指定topic下的具体分区
         2. 消费者的分区分配是为消费者指定可以消费消息的分区，partition.assignment.strategy 来设置消费者与订阅主题之间的分区分配策略。
         3. 分区副本的分配方案，即在那个borker中创建了哪个分区的副本
     
-    31. kafka的日志目录结构？
+    33. kafka的日志目录结构？
     
         1. 
         2. 实例图：![image-20211114120620830](image-20211114120620830.png)
     
-    32. kakfa有哪些索引文件
+    34. kakfa有哪些索引文件
     
         1. offset：偏移量索引文件
         2. 时间戳索引文件
         3. 事务索引：kafka开启了事务之后才会出现这个索引
     
-    33. 如果指定一个offset，kafka怎么查找对应的消息
+    35. 如果指定一个offset，kafka怎么查找对应的消息
     
         1. kafka通过seek方法指定消费，在执行seek方法之前要执行一次poll方法，等到分配到分区之后去对应的分区的指定位置开始消费，如果指定的位置发生了越界，会根据auto.offset.reset的参数进行消费
     
-    34. 如果制定了timestamp，怎么找到对应的消息
+    36. 如果制定了timestamp，怎么找到对应的消息
     
         1. kafka提供了offsetForTimes方法，通过timestamp来查询于此对应分区的位置。该方法会返回时间戳大于等于参数的第一条消息对应的位置和时间戳
     
-    35. kafka log Retention（日志删除）的理解
+    37. kafka log Retention（日志删除）的理解
     
         1. 基于时间
         2. 基于大小
         3. 基于offset
     
-    36. log compactioin（日志压缩）的理解
+    38. log compactioin（日志压缩）的理解
     
         1. 针对每个消息的key进行整合，对于有相同key的不同value，只保留最后一个版本
     
-    37. kafka底层存储的理解（页缓存、内核层，块层，设备层）
+    39. kafka底层存储的理解（页缓存、内核层，块层，设备层）
     
         1. 页缓存：操作系统的页缓存
         2. 零拷贝
     
-    38. kafka延时操作的原理（时间轮）
+    40. kafka延时操作的原理（时间轮）
     
         1. 延时生产
         2. 延时拉取
         3. 延时数据删除
     
-    39. kafka控制器的作用
+    41. kafka控制器的作用
     
         1. kafka的集群中有一个broker被选举为kafka Controller：它负责管理整个集群中所有分区和副本的状态。
         2. 当某个分区的leader出现故障时，有controller负责为该分区选举新的leader。
         3. 当检测到某个分区的ISR集合发生变化时，负责通知所有的borker更新元数据信息
     
-    40. Group Coordinator和Consumer Coordinator的关系
+    42. Group Coordinator和Consumer Coordinator的关系
     
         1. GroupCoordinator 是 Kafka 服务端中用于管理消费组的组件。而消费者客户端中的 ConsumerCoordinator 组件负责与 GroupCoordinator 进行交互
     
-    41. 什么时候会发生rebalance
+    43. 什么时候会发生rebalance
     
         1. 有新的消费者加入消费者组
         2. 有消费者宕机：也有可能是消费者遇到长时间GC、网络延迟导致未向GroupCoordinator发送心跳，此时GroupCoordinator会认为消费者已经下线
@@ -1346,81 +1382,84 @@
         4. 消费者组的GroupCoordinator节点发生了变化
         5. 消费者组订阅的topic或者topic的分区发生了变化
     
-    42. 消费再均衡的原理（消费者协调器和消费者组协调器）
+    44. 消费再均衡的原理（消费者协调器和消费者组协调器）
     
         1. 第一阶段
         2. 第二阶段
         3. 第三阶段
         4. 第四阶段
     
-    43. kafka的幂等
+    45. kafka的幂等
     
         1. producerId: producer初始化时，会被分配一个producerId，对客户端不可见
         2. sequenceNumber：对于每个producerId，produce发送的每个topic和partition都对应一个从0开始单调递增的sequenceNumber，如果broker收到了重复的sequenceNumber，会丢弃该消息
     
-    44. kafka的事务怎么实现
+    46. kafka的事务怎么实现
     
         1. 生产者提供一个唯一的transactionId，请求事务协调器获取一个pid，transactionId和pid一一对应
         2. 生产者发送数据之前，向事务协调器发送addPartitionsToTxnRequest，事务协调器将该<Transaction,Topic,Partiton>存于__transaction_state内，将其状态置为begin
         3. 
     
-    45. kafka怎么保证exactly once
+    47. kafka怎么保证exactly once
     
         1. kafka的exactly once保证的是生产者到broker的幂等，是通过幂等+事务实现的
         2. 幂等保证了生产者到单个partition不会出现重复消息
         3. 事务保证了生产者到多个partition不会出现重复消息
     
-    46. kafka什么地方需要选举？这些地方的选举策略是什么
+    48. kafka什么地方需要选举？这些地方的选举策略是什么
     
-    47. 失效副本是什么？有什么应对措施
+    49. 失效副本是什么？有什么应对措施
     
-    48. 多副本下，各个副本的HW和LEO的演变过程
+    50. 多副本下，各个副本的HW和LEO的演变过程
     
-    49. kafka为什么不支持读写分离？
+    51. kafka为什么不支持读写分离？
     
-        1. 数据一致性
+        1. 读写分离适用于读多写少的情况，kafka属于消息队列，不属于这种情况
+        1. 单调一致性读：防止有些消息一会能看到一会不能看到(从一个副本切换到另一个副本时会出现)
+        2. 单个broker可以做多个partition的leader，如果partition均匀，每个生产消费的速度也均衡，效果和负载均衡是一样的
+        3. 数据一致性
     
-    50. kafka在可靠性方面做了哪些改进（HW,LeaderEpoch）
+    52. kafka在可靠性方面做了哪些改进（HW,LeaderEpoch）
     
         1. HW：消费者只能消费HW之前的数据
         2. leader epoch：leader的纪元信息，每当leader变更一次，leader epoch就会加1.解决数据不一致的问题
     
-    51. kafka怎么实现私信队列和重试队列
+    53. kafka怎么实现私信队列和重试队列
     
         1. 重试队列：当消费者多次消费失败后，将消息发送到重试队列
         2. 
     
-    52. kafka的延时队列
+    54. kafka的延时队列
     
         1. 在发送延时消息的时候并不是先投递到要发送的真实主题（real_topic）中，而是先投递到一些 Kafka 内部的主题（delay_topic）中，这些内部主题对用户不可见，然后通过一个自定义的服务拉取这些内部主题中的消息，并将满足条件的消息再投递到要发送的真实的主题中，消费者所订阅的还是真实的主题
     
-    53. kafka怎么做消息审计
+    55. kafka怎么做消息审计
     
-    54. kakfa怎么做消息轨迹
+    56. kakfa怎么做消息轨迹
     
         1. 封装客户端 埋点监控
     
-    55. kakfa的配置参数
+    57. kakfa的配置参数
     
-    56. kafka的监控指标
+    58. kafka的监控指标
     
-    57. 怎么计算Lag（read_uncommitted和read_committed状态下不同）
+    59. 怎么计算Lag（read_uncommitted和read_committed状态下不同）
     
-    58. kafka的优缺点（对比rocketmq，rabbitmq）
+    60. kafka的优缺点（对比rocketmq，rabbitmq）
     
-    59. kafka的过程中有什么问题？怎么就解决
+    61. kafka的过程中有什么问题？怎么就解决
     
-    60. 怎么极大程度上保证kafka的可靠性
+    62. 怎么极大程度上保证kafka的可靠性
     
-    61. 消息的堆积处理？
+    63. 消息的堆积处理？
     
-    62. kafka的主题与分区内部是如何存储的，有什么特点？
+    64. kafka的主题与分区内部是如何存储的，有什么特点？
     
-    63. 与传统的消息系统相比，kafka的消费模型有什么优点？
+    65. 与传统的消息系统相比，kafka的消费模型有什么优点？
     
-    64. kafka如何实现分布式的数据存储与数据读取？
+    66. kafka如何实现分布式的数据存储与数据读取？
     
-    65. 索引
+    67. 索引
     
         1. 什么是稀疏索引？和密集索引的关系以及区别
     
@@ -1432,7 +1471,12 @@
            2. 位移索引
            3. 事务索引
     
-    66. 源码？
+    68. kafka为什么要做流平台
+    
+        1. 流处理 处于kafka的上下游，原先是做存储现在做计算
+        2. 原先是集成数据，现在可以继承服务
+    
+    69. 源码？
 
 # mysql
 
@@ -1642,7 +1686,7 @@
     
              > 如果sql语句用到了组合索引的最左边的字段，那这个sql语句就可以利用这个组合索引去匹配，当遇到范围查询（>,<.between,like）就会停止匹配，后续的字段将无法用到索引
              >
-             > 联合索引的字段排序是按照索引的定义排的，比如（a，b，c）这个联合索引， a是全局有序， b只有在a相等的情况下才有序，c只有在ab都相等的时候才有序。所以在写sql的时候如果想用这个索引的c，必须要先指定ab， 因为ab在c的前面。同时如果ab的查询条件有<> between like等，那么索引后面的字段也不会匹配
+             > 联合索引的字段排序是按照索引的定义排的，比如（a，b，c）这个联合索引， a是全局有序， b只有在a相等的情况下才有序，c只有在ab都相等的时候才有序。所以在写sql的时候如果想用这个索引的c，必须要先指定ab， 因为ab在c的前面。同时如果ab的查询条件有<> between like等，那么当前字段就变成无序的了，无法利用索引，只能全部扫描，那么索引后面的字段也不会匹配
     
          11. 联合索引建立规则？
        
@@ -1777,7 +1821,7 @@
    24. 怎么解决主从同步延迟？
 
            1. mysql5.6之后支持多线程重放
-    
+            
                   27. 对于实时性要求高的数据，读主库
 
    25. 一个6亿的表a，一个3亿的表b，通过外间tid关联，你如何最快的查询出满足条件的第50000到第50200中的这200条数据记录
@@ -2244,11 +2288,11 @@
    58. 主库挂怎么办》？
 
           1. 使用哨兵，把从库提升为主库
-                 59. 性能优化？
-
+                  59. 性能优化？
              1. master不做任务持久化工作，slave可以开启持久化
              2. master和slave在同一个局域网
              3. 主从复制采用单链表结构，而不是图状结构
+                 59. redis主从切换导致分布式锁失效？
 
 # Dubbo
 
