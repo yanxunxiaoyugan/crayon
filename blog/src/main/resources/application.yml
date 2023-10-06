@@ -13,11 +13,19 @@ spring:
         watch:
           enabled: false
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://121.4.78.71:3306/crayon?userUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useCursorFetch=true
-    username: liubenwei
-    password: liubenwei
-mybatis-plus:
-  mapper-locations: classpath*:/mapper/*.xml
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:~/test
+    username: root
+    password: root
+  jpa:
+    database: h2
+    hibernate:
+      ddl-auto: update
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://121.4.78.71:3306/crayon?userUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useCursorFetch=true
+#    username: liubenwei
+#    password: liubenwei
+#mybatis-plus:
+#  mapper-locations: classpath*:/mapper/*.xml
 server:
   port: 8001

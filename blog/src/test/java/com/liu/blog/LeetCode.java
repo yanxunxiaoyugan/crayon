@@ -4,12 +4,13 @@ import java.util.*;
 
 public class LeetCode {
     public static void main(String[] args) {
+        final int c = "asd".charAt(0);
         LeetCode leetCode = new LeetCode();
         int[][] arr= {{1,2,3},{4,5,6},{7,8,9}};
         Deque<Integer> deque = new ArrayDeque<>();
         List<List<Integer>> list = new ArrayList<>();
         LinkedList<Integer> a = new LinkedList<>();
-        list.add(list);
+//        list.add(list);
         a.set(0,1);
 
         int[] repeatNumber = leetCode.spiralOrder(arr);

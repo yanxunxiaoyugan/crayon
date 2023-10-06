@@ -80,7 +80,7 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>3.2.3</version>
-        </dependency>A
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.kafka/kafka -->
         <dependency>
             <groupId>org.apache.kafka</groupId>

@@ -1,5 +1,10 @@
 package com.liu.blog.entity;
 
+import org.hibernate.annotations.Table;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -11,9 +16,11 @@ import java.io.Serializable;
  * @author makejava
  * @since 2021-07-27 14:44:49
  */
+@Entity(name = "blog")
+@Table(appliesTo = "blog")
 public class Blog implements Serializable {
     private static final long serialVersionUID = 660475391278556614L;
-    
+    @Id
     private Integer id;
     
     private Integer userId;
@@ -33,6 +40,7 @@ public class Blog implements Serializable {
     private String description;
 
 
+    @Id
     public Integer getId() {
         return id;
     }
@@ -104,4 +112,5 @@ public class Blog implements Serializable {
     public void setDescription(String description) {
         this.description = description;
     }
+
 }
